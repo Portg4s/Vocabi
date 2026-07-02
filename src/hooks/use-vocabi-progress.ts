@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { badgeDefinitions } from "@/data/badges";
 import { allLessons } from "@/data/lessons";
 import { calculateEarnedXp, calculateLessonScore, getExpectedAnswer, todayKey } from "@/features/learning/scoring";
-import { db, ensureProfile, exportVocabiData, resetVocabiData } from "@/lib/storage/db";
+import { db, ensureProfile, exportVocabiData, importVocabiData, resetVocabiData } from "@/lib/storage/db";
 import type {
   BadgeUnlock,
   DailyStats,
@@ -248,6 +248,11 @@ export function useVocabiProgress() {
 
   const exportData = useCallback(async () => exportVocabiData(), []);
 
+  const importData = useCallback(async (data: unknown) => {
+    await importVocabiData(data);
+    await refresh();
+  }, [refresh]);
+
   return useMemo(() => ({
     ...snapshot,
     completeOnboarding,
@@ -255,6 +260,7 @@ export function useVocabiProgress() {
     getLessonStatus,
     resetData,
     exportData,
+    importData,
     refresh,
-  }), [completeLesson, completeOnboarding, exportData, getLessonStatus, refresh, resetData, snapshot]);
+  }), [completeLesson, completeOnboarding, exportData, getLessonStatus, importData, refresh, resetData, snapshot]);
 }

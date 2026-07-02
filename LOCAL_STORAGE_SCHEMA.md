@@ -64,7 +64,8 @@ Stockage principal: IndexedDB via Dexie.js. `localStorage` peut seulement servir
 
 ## Protection contre la perte
 - Export JSON manuel depuis l'ecran profil/reglages.
-- Import JSON avec validation de version.
+- Import JSON depuis l'ecran profil/reglages avec validation de version.
+- L'import remplace les donnees locales par le contenu de la sauvegarde.
 - Migrations Dexie versionnees.
 - Reset avec confirmation explicite.
 

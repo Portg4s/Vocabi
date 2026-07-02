@@ -13,10 +13,11 @@ import {
   Sparkles,
   Target,
   Trophy,
+  Upload,
   X,
 } from "lucide-react";
-import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import type { ChangeEvent, ReactNode } from "react";
+import { useMemo, useRef, useState } from "react";
 import { badgeDefinitions } from "@/data/badges";
 import { allLessons, getFirstLesson, units } from "@/data/lessons";
 import { errorShake, feedbackVariants, successPulse } from "@/lib/animations/variants";
@@ -389,6 +390,28 @@ function StatsView({ progress }: { progress: ReturnType<typeof useVocabiProgress
 function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgress> }) {
   const unlockedBadgeIds = new Set(progress.badges.map((badge) => badge.badgeId));
   const [busy, setBusy] = useState(false);
+  const [backupMessage, setBackupMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      setBusy(true);
+      const raw = await file.text();
+      await progress.importData(JSON.parse(raw));
+      setBackupMessage("Sauvegarde importée. Tes données locales ont été remplacées.");
+    } catch (error) {
+      setBackupMessage(error instanceof Error ? error.message : "Impossible d'importer cette sauvegarde.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-5">
@@ -420,6 +443,16 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
         >
           Exporter une sauvegarde
         </Button>
+        <input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden" onChange={handleImport} />
+        <Button
+          variant="secondary"
+          className="w-full"
+          disabled={busy}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Upload className="h-5 w-5" />
+          Importer une sauvegarde
+        </Button>
         <Button
           variant="danger"
           className="w-full"
@@ -434,6 +467,7 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
           <RotateCcw className="h-5 w-5" />
           Reset local
         </Button>
+        {backupMessage && <p className="rounded-2xl bg-slate-50 p-3 text-sm font-bold leading-6 text-slate-600">{backupMessage}</p>}
       </Card>
       <section className="space-y-3">
         <h2 className="text-lg font-black">Tous les badges</h2>

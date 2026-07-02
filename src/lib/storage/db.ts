@@ -89,6 +89,51 @@ export async function exportVocabiData() {
   };
 }
 
+type VocabiBackup = Awaited<ReturnType<typeof exportVocabiData>>;
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function readArray<T>(backup: Record<string, unknown>, key: keyof VocabiBackup): T[] {
+  const value = backup[key];
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+export async function importVocabiData(data: unknown) {
+  if (!isObject(data) || data.version !== 1) {
+    throw new Error("Sauvegarde Vocabi invalide ou version non supportée.");
+  }
+
+  const userProfile = readArray<UserProfile>(data, "userProfile");
+  const lessonProgress = readArray<LessonProgress>(data, "lessonProgress");
+  const exerciseHistory = readArray<ExerciseHistory>(data, "exerciseHistory");
+  const dailyStats = readArray<DailyStats>(data, "dailyStats");
+  const badges = readArray<BadgeUnlock>(data, "badges");
+  const settings = readArray<SettingEntry>(data, "settings");
+  const meta = readArray<MetaEntry>(data, "meta");
+
+  await db.transaction("rw", [db.userProfile, db.lessonProgress, db.exerciseHistory, db.dailyStats, db.badges, db.settings, db.meta], async () => {
+    await Promise.all([
+      db.userProfile.clear(),
+      db.lessonProgress.clear(),
+      db.exerciseHistory.clear(),
+      db.dailyStats.clear(),
+      db.badges.clear(),
+      db.settings.clear(),
+      db.meta.clear(),
+    ]);
+
+    await db.userProfile.bulkPut(userProfile.length > 0 ? userProfile : [{ ...defaultProfile, createdAt: new Date().toISOString() }]);
+    await db.lessonProgress.bulkPut(lessonProgress);
+    await db.exerciseHistory.bulkPut(exerciseHistory);
+    await db.dailyStats.bulkPut(dailyStats);
+    await db.badges.bulkPut(badges);
+    await db.settings.bulkPut(settings);
+    await db.meta.bulkPut(meta);
+  });
+}
+
 export async function resetVocabiData() {
   await db.transaction("rw", [db.userProfile, db.lessonProgress, db.exerciseHistory, db.dailyStats, db.badges, db.settings, db.meta], async () => {
     await Promise.all([
