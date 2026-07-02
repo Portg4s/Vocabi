@@ -19,7 +19,7 @@ import {
 import type { ChangeEvent, ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
 import { badgeDefinitions } from "@/data/badges";
-import { allLessons, getFirstLesson, units } from "@/data/lessons";
+import { allLessons, getExerciseById, getFirstLesson, units } from "@/data/lessons";
 import { errorShake, feedbackVariants, successPulse } from "@/lib/animations/variants";
 import { Button } from "@/components/ui/button";
 import { BadgePill } from "@/components/ui/badge-pill";
@@ -355,20 +355,18 @@ function LessonsView({ progress, onStartLesson }: { progress: ReturnType<typeof 
 }
 
 function StatsView({ progress }: { progress: ReturnType<typeof useVocabiProgress> }) {
-  const accuracy = useMemo(() => {
-    const correct = progress.dailyStats.reduce((sum, day) => sum + day.correctAnswers, 0);
-    const total = progress.dailyStats.reduce((sum, day) => sum + day.correctAnswers + day.wrongAnswers, 0);
-    return total ? Math.round((correct / total) * 100) : 0;
-  }, [progress.dailyStats]);
+  const recentMistakes = useMemo(() => progress.exerciseHistory.filter((item) => !item.correct).slice(-5).reverse(), [progress.exerciseHistory]);
 
   return (
     <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-5">
       <PageTitle eyebrow="Progression" title="Tes stats" />
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="XP total" value={progress.totalXp.toString()} />
-        <StatCard label="Précision" value={`${accuracy}%`} />
+        <StatCard label="Précision" value={`${progress.accuracy}%`} />
         <StatCard label="Série" value={`${progress.streak} jour(s)`} />
         <StatCard label="Leçons" value={progress.completedLessons.toString()} />
+        <StatCard label="Meilleure série" value={`${progress.bestStreak} jour(s)`} />
+        <StatCard label="Exercices" value={progress.totalExercises.toString()} />
       </div>
       <Card className="space-y-3">
         <h2 className="text-lg font-black">Activité récente</h2>
@@ -383,6 +381,19 @@ function StatsView({ progress }: { progress: ReturnType<typeof useVocabiProgress
           ))
         )}
       </Card>
+      <Card className="space-y-3">
+        <h2 className="text-lg font-black">À revoir</h2>
+        {recentMistakes.length === 0 ? (
+          <p className="text-sm leading-6 text-slate-600">Aucune erreur enregistrée pour l&apos;instant. C&apos;est bon signe.</p>
+        ) : (
+          recentMistakes.map((item) => (
+            <div key={item.id} className="rounded-2xl bg-rose-50 p-3">
+              <p className="text-sm font-black text-rose-900">{getExerciseById(item.exerciseId)?.prompt ?? item.exerciseId}</p>
+              <p className="text-xs font-bold leading-5 text-slate-600">Réponse attendue : {formatExpected(item.expected)}</p>
+            </div>
+          ))
+        )}
+      </Card>
     </motion.section>
   );
 }
@@ -391,6 +402,7 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
   const unlockedBadgeIds = new Set(progress.badges.map((badge) => badge.badgeId));
   const [busy, setBusy] = useState(false);
   const [backupMessage, setBackupMessage] = useState<string | null>(null);
+  const [goalMessage, setGoalMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -416,6 +428,34 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
   return (
     <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-5">
       <PageTitle eyebrow="Local-first" title="Profil & sauvegarde" />
+      <Card className="space-y-4">
+        <div>
+          <h2 className="text-lg font-black">Objectif quotidien</h2>
+          <p className="text-sm leading-6 text-slate-600">Actuel : {progress.profile?.dailyGoalXp ?? 30} XP par jour.</p>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {goalOptions.map((goal) => (
+            <button
+              key={goal}
+              type="button"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                await progress.updateDailyGoal(goal);
+                setGoalMessage(`Objectif mis à jour : ${goal} XP par jour.`);
+                setBusy(false);
+              }}
+              className={cn(
+                "rounded-2xl border p-3 text-center text-sm font-black transition active:scale-95",
+                progress.profile?.dailyGoalXp === goal ? "border-emerald-400 bg-emerald-100 text-emerald-950" : "border-slate-200 bg-white text-slate-600",
+              )}
+            >
+              {goal} XP
+            </button>
+          ))}
+        </div>
+        {goalMessage && <p className="rounded-2xl bg-emerald-50 p-3 text-sm font-bold leading-6 text-emerald-800">{goalMessage}</p>}
+      </Card>
       <Card className="space-y-3">
         <div className="flex items-center gap-3">
           <div className="grid h-14 w-14 place-items-center rounded-3xl bg-slate-950 text-white">

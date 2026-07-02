@@ -4,7 +4,7 @@ export const units: Unit[] = [
   {
     id: "basics-1",
     title: "Bases essentielles",
-    description: "Saluer, se presenter et reconnaitre les phrases simples.",
+    description: "Saluer, se présenter et reconnaître les premières phrases utiles.",
     color: "mint",
     lessons: [
       {
@@ -47,10 +47,19 @@ export const units: Unit[] = [
             id: "hello-4",
             kind: "fill-blank",
             prompt: "I ___ fine.",
-            instruction: "Complete la phrase.",
+            instruction: "Complète la phrase.",
             answer: "am",
             acceptedAnswers: ["am"],
             xp: 10,
+          },
+          {
+            id: "hello-5",
+            kind: "review-quiz",
+            prompt: "See you soon",
+            instruction: "Choisis le sens de cette expression.",
+            options: ["À bientôt", "Bonne nuit", "Je suis désolé", "Merci beaucoup"],
+            answer: "À bientôt",
+            xp: 8,
           },
         ],
       },
@@ -76,8 +85,8 @@ export const units: Unit[] = [
             kind: "multiple-choice",
             prompt: "Please",
             instruction: "Choisis la bonne traduction.",
-            options: ["S'il te plait", "Pardon", "A bientot", "Je vais bien"],
-            answer: "S'il te plait",
+            options: ["S'il te plaît", "Pardon", "À bientôt", "Je vais bien"],
+            answer: "S'il te plaît",
             xp: 8,
           },
           {
@@ -88,7 +97,7 @@ export const units: Unit[] = [
             pairs: [
               { left: "eau", right: "water" },
               { left: "pain", right: "bread" },
-              { left: "cafe", right: "coffee" },
+              { left: "café", right: "coffee" },
             ],
             xp: 15,
           },
@@ -97,8 +106,17 @@ export const units: Unit[] = [
             kind: "review-quiz",
             prompt: "How are you?",
             instruction: "Que veut dire cette question ?",
-            options: ["Comment ca va ?", "Ou es-tu ?", "Qui es-tu ?", "Quel age as-tu ?"],
-            answer: "Comment ca va ?",
+            options: ["Comment ça va ?", "Où es-tu ?", "Qui es-tu ?", "Quel âge as-tu ?"],
+            answer: "Comment ça va ?",
+            xp: 10,
+          },
+          {
+            id: "needs-5",
+            kind: "fill-blank",
+            prompt: "Can I have water, ___?",
+            instruction: "Complète avec le mot poli.",
+            answer: "please",
+            acceptedAnswers: ["please"],
             xp: 10,
           },
         ],
@@ -114,7 +132,7 @@ export const units: Unit[] = [
       {
         id: "home-words",
         unitId: "daily-life",
-        title: "A la maison",
+        title: "À la maison",
         description: "Apprendre les mots utiles autour de la maison.",
         estimatedMinutes: 4,
         difficulty: "A1",
@@ -140,11 +158,173 @@ export const units: Unit[] = [
           {
             id: "home-3",
             kind: "sentence-builder",
-            prompt: "Je suis a la maison",
+            prompt: "Je suis à la maison",
             instruction: "Reconstitue la phrase.",
             tokens: ["I", "am", "at", "home", "in", "house"],
             answer: ["I", "am", "at", "home"],
             xp: 12,
+          },
+          {
+            id: "home-4",
+            kind: "match-pairs",
+            prompt: "Associe les objets.",
+            instruction: "Trouve les paires de vocabulaire.",
+            pairs: [
+              { left: "chaise", right: "chair" },
+              { left: "table", right: "table" },
+              { left: "lit", right: "bed" },
+            ],
+            xp: 15,
+          },
+        ],
+      },
+      {
+        id: "daily-actions",
+        unitId: "daily-life",
+        title: "Actions du quotidien",
+        description: "Comprendre les verbes simples pour parler de sa journée.",
+        estimatedMinutes: 5,
+        difficulty: "A1",
+        exercises: [
+          {
+            id: "actions-1",
+            kind: "multiple-choice",
+            prompt: "I eat",
+            instruction: "Choisis la bonne traduction.",
+            options: ["Je mange", "Je bois", "Je dors", "Je lis"],
+            answer: "Je mange",
+            xp: 8,
+          },
+          {
+            id: "actions-2",
+            kind: "translate-fr-en",
+            prompt: "Je bois de l'eau",
+            instruction: "Traduis en anglais.",
+            answer: "i drink water",
+            acceptedAnswers: ["i drink water", "i drink some water"],
+            xp: 12,
+          },
+          {
+            id: "actions-3",
+            kind: "fill-blank",
+            prompt: "She ___ a book.",
+            instruction: "Complète avec le verbe lire.",
+            answer: "reads",
+            acceptedAnswers: ["reads"],
+            xp: 12,
+            hint: "Avec he/she/it, on ajoute souvent un s au présent simple.",
+          },
+          {
+            id: "actions-4",
+            kind: "sentence-builder",
+            prompt: "Nous travaillons aujourd'hui",
+            instruction: "Reconstitue la phrase.",
+            tokens: ["We", "work", "today", "are", "working"],
+            answer: ["We", "work", "today"],
+            xp: 12,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "travel-a1",
+    title: "Voyage facile",
+    description: "Se débrouiller avec des phrases très simples en déplacement.",
+    color: "sun",
+    lessons: [
+      {
+        id: "directions",
+        unitId: "travel-a1",
+        title: "Se repérer",
+        description: "Demander son chemin et comprendre les directions simples.",
+        estimatedMinutes: 5,
+        difficulty: "A2",
+        exercises: [
+          {
+            id: "directions-1",
+            kind: "translate-fr-en",
+            prompt: "Où est la gare ?",
+            instruction: "Traduis en anglais.",
+            answer: "where is the train station",
+            acceptedAnswers: ["where is the train station", "where is the station"],
+            xp: 14,
+          },
+          {
+            id: "directions-2",
+            kind: "multiple-choice",
+            prompt: "Turn left",
+            instruction: "Choisis la bonne traduction.",
+            options: ["Tournez à gauche", "Tournez à droite", "Allez tout droit", "Arrêtez-vous"],
+            answer: "Tournez à gauche",
+            xp: 10,
+          },
+          {
+            id: "directions-3",
+            kind: "match-pairs",
+            prompt: "Associe les directions.",
+            instruction: "Relie chaque mot à son sens.",
+            pairs: [
+              { left: "left", right: "gauche" },
+              { left: "right", right: "droite" },
+              { left: "straight", right: "tout droit" },
+            ],
+            xp: 15,
+          },
+          {
+            id: "directions-4",
+            kind: "sentence-builder",
+            prompt: "La banque est à droite",
+            instruction: "Reconstitue la phrase.",
+            tokens: ["The", "bank", "is", "on", "the", "right", "left"],
+            answer: ["The", "bank", "is", "on", "the", "right"],
+            xp: 14,
+          },
+        ],
+      },
+      {
+        id: "hotel-checkin",
+        unitId: "travel-a1",
+        title: "À l'hôtel",
+        description: "Phrases utiles pour arriver à l'hôtel et demander de l'aide.",
+        estimatedMinutes: 5,
+        difficulty: "A2",
+        exercises: [
+          {
+            id: "hotel-1",
+            kind: "multiple-choice",
+            prompt: "I have a reservation",
+            instruction: "Choisis la bonne traduction.",
+            options: ["J'ai une réservation", "Je veux payer", "Je suis perdu", "J'ai faim"],
+            answer: "J'ai une réservation",
+            xp: 10,
+          },
+          {
+            id: "hotel-2",
+            kind: "fill-blank",
+            prompt: "Can you help ___?",
+            instruction: "Complète la phrase.",
+            answer: "me",
+            acceptedAnswers: ["me"],
+            xp: 10,
+          },
+          {
+            id: "hotel-3",
+            kind: "translate-fr-en",
+            prompt: "La chambre est propre",
+            instruction: "Traduis en anglais.",
+            answer: "the room is clean",
+            acceptedAnswers: ["the room is clean"],
+            xp: 12,
+          },
+          {
+            id: "hotel-4",
+            kind: "review-quiz",
+            prompt: "Key",
+            instruction: "Choisis la bonne traduction.",
+            options: ["Clé", "Lit", "Douche", "Fenêtre"],
+            answer: "Clé",
+            xp: 8,
           },
         ],
       },
@@ -162,3 +342,14 @@ export function getFirstLesson() {
   return allLessons[0];
 }
 
+export function getExerciseById(exerciseId: string) {
+  for (const lesson of allLessons) {
+    const exercise = lesson.exercises.find((item) => item.id === exerciseId);
+
+    if (exercise) {
+      return exercise;
+    }
+  }
+
+  return undefined;
+}

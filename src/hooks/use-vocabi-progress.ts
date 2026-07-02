@@ -28,11 +28,15 @@ type CompleteLessonInput = {
 export type ProgressSnapshot = {
   profile: UserProfile | null;
   lessonProgress: LessonProgress[];
+  exerciseHistory: ExerciseHistory[];
   dailyStats: DailyStats[];
   badges: BadgeUnlock[];
   totalXp: number;
   todayXp: number;
   streak: number;
+  bestStreak: number;
+  accuracy: number;
+  totalExercises: number;
   completedLessons: number;
   loading: boolean;
   error: string | null;
@@ -42,11 +46,15 @@ function createEmptySnapshot(): ProgressSnapshot {
   return {
     profile: null,
     lessonProgress: [],
+    exerciseHistory: [],
     dailyStats: [],
     badges: [],
     totalXp: 0,
     todayXp: 0,
     streak: 0,
+    bestStreak: 0,
+    accuracy: 0,
+    totalExercises: 0,
     completedLessons: 0,
     loading: true,
     error: null,
@@ -64,6 +72,35 @@ function calculateStreak(stats: DailyStats[]) {
   }
 
   return streak;
+}
+
+function calculateBestStreak(stats: DailyStats[]) {
+  const dates = stats
+    .filter((day) => day.xp > 0)
+    .map((day) => day.date)
+    .sort();
+
+  if (dates.length === 0) {
+    return 0;
+  }
+
+  let best = 1;
+  let current = 1;
+
+  for (let index = 1; index < dates.length; index += 1) {
+    const previous = new Date(dates[index - 1]);
+    const next = new Date(dates[index]);
+    previous.setDate(previous.getDate() + 1);
+
+    if (todayKey(previous) === todayKey(next)) {
+      current += 1;
+      best = Math.max(best, current);
+    } else if (dates[index] !== dates[index - 1]) {
+      current = 1;
+    }
+  }
+
+  return best;
 }
 
 function resolveBadges({
@@ -107,23 +144,30 @@ export function useVocabiProgress() {
   const refresh = useCallback(async () => {
     try {
       const profile = await ensureProfile();
-      const [lessonProgress, dailyStats, badges] = await Promise.all([
+      const [lessonProgress, exerciseHistory, dailyStats, badges] = await Promise.all([
         db.lessonProgress.toArray(),
+        db.exerciseHistory.toArray(),
         db.dailyStats.toArray(),
         db.badges.toArray(),
       ]);
       const totalXp = lessonProgress.reduce((sum, lesson) => sum + lesson.xpEarned, 0);
       const today = dailyStats.find((day) => day.date === todayKey());
       const completedLessons = lessonProgress.filter((lesson) => lesson.status === "completed" || lesson.status === "mastered").length;
+      const correctAnswers = dailyStats.reduce((sum, day) => sum + day.correctAnswers, 0);
+      const totalAnswers = dailyStats.reduce((sum, day) => sum + day.correctAnswers + day.wrongAnswers, 0);
 
       setSnapshot({
         profile,
         lessonProgress,
+        exerciseHistory,
         dailyStats,
         badges,
         totalXp,
         todayXp: today?.xp ?? 0,
         streak: calculateStreak(dailyStats),
+        bestStreak: calculateBestStreak(dailyStats),
+        accuracy: totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0,
+        totalExercises: totalAnswers,
         completedLessons,
         loading: false,
         error: null,
@@ -253,14 +297,24 @@ export function useVocabiProgress() {
     await refresh();
   }, [refresh]);
 
+  const updateDailyGoal = useCallback(async (dailyGoalXp: number) => {
+    const profile = await ensureProfile();
+    await db.userProfile.put({
+      ...profile,
+      dailyGoalXp,
+    });
+    await refresh();
+  }, [refresh]);
+
   return useMemo(() => ({
     ...snapshot,
     completeOnboarding,
+    updateDailyGoal,
     completeLesson,
     getLessonStatus,
     resetData,
     exportData,
     importData,
     refresh,
-  }), [completeLesson, completeOnboarding, exportData, getLessonStatus, importData, refresh, resetData, snapshot]);
+  }), [completeLesson, completeOnboarding, exportData, getLessonStatus, importData, refresh, resetData, snapshot, updateDailyGoal]);
 }
