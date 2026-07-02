@@ -22,7 +22,7 @@ import { allLessons, getFirstLesson, units } from "@/data/lessons";
 import { errorShake, feedbackVariants, successPulse } from "@/lib/animations/variants";
 import { Button } from "@/components/ui/button";
 import { BadgePill } from "@/components/ui/badge-pill";
-import { Card, SoftCard } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { getExpectedAnswer, isAnswerCorrect } from "@/features/learning/scoring";
@@ -219,18 +219,20 @@ function Dashboard({
         <Metric icon={<Trophy className="h-5 w-5" />} label="Leçons" value={progress.completedLessons.toString()} tone="sky" />
       </div>
 
-      <Card className="space-y-4 overflow-hidden border-slate-800 bg-[linear-gradient(145deg,#07111f_0%,#0f172a_64%,#134e4a_100%)] p-4 text-white shadow-[0_18px_38px_rgba(2,6,23,0.18)]">
+      <div className="space-y-4 overflow-hidden rounded-[1.45rem] border border-slate-800 p-4 text-white shadow-[0_18px_38px_rgba(2,6,23,0.18)]" style={{ background: "linear-gradient(145deg, #07111f 0%, #0f172a 62%, #115e59 100%)" }}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-bold text-emerald-200">Objectif du jour</p>
+            <p className="text-sm font-extrabold text-emerald-200">Objectif du jour</p>
             <h2 className="mt-1 text-[1.7rem] font-black leading-none">{progress.todayXp}/{progress.profile?.dailyGoalXp ?? 30} XP</h2>
           </div>
-          <Target className="h-7 w-7 text-amber-300" />
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-300 text-slate-950">
+            <Target className="h-6 w-6" />
+          </div>
         </div>
         <ProgressBar value={dailyPercent} className="bg-slate-700" />
-      </Card>
+      </div>
 
-      <Card className="space-y-4 border-emerald-200/90 bg-white/92 p-4">
+      <div className="space-y-4 rounded-[1.45rem] border border-emerald-200/90 bg-white/92 p-4 shadow-[0_18px_42px_rgba(16,185,129,0.13)] backdrop-blur">
         <div className="flex items-center gap-3">
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-700">
             <BookOpenCheck className="h-6 w-6" />
@@ -241,11 +243,11 @@ function Dashboard({
           </div>
         </div>
         <p className="text-sm leading-6 text-slate-600">{nextLesson.description}</p>
-        <Button className="w-full" onClick={() => onStartLesson(nextLesson)}>
+        <Button className="w-full rounded-[1.35rem]" size="lg" onClick={() => onStartLesson(nextLesson)}>
           Lancer la leçon
           <ChevronRight className="h-5 w-5" />
         </Button>
-      </Card>
+      </div>
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
@@ -270,11 +272,11 @@ function Metric({ icon, label, value, tone }: { icon: ReactNode; label: string; 
   }[tone];
 
   return (
-    <SoftCard className="min-h-[5.8rem] p-3">
+    <div className="min-h-[5.6rem] rounded-[1.25rem] border border-white/80 bg-white/82 p-3 shadow-[0_12px_28px_rgba(15,23,42,0.07)] backdrop-blur">
       <div className={cn("mb-2 grid h-8 w-8 place-items-center rounded-xl", toneClass)}>{icon}</div>
       <p className="text-[1.35rem] font-black leading-none">{value}</p>
       <p className="mt-1 text-[0.72rem] font-bold text-slate-500">{label}</p>
-    </SoftCard>
+    </div>
   );
 }
 
@@ -665,6 +667,10 @@ function hasAnswer(answer: string | string[]) {
 function formatExpected(answer: string | string[]) {
   return Array.isArray(answer) ? answer.join(" ") : answer;
 }
+
+
+
+
 
 
 
