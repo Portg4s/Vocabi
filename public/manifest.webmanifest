@@ -1,0 +1,20 @@
+﻿{
+  "name": "Vocabi",
+  "short_name": "Vocabi",
+  "description": "Apprendre les bases de l'anglais avec des leçons courtes, locales et motivantes.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fff7",
+  "theme_color": "#10b981",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "icons/vocabi.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
