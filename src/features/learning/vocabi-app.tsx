@@ -48,10 +48,16 @@ type LessonResult = {
 
 const goalOptions = [20, 30, 50];
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const lexiconPrismImage = `${basePath}/icons/vocabi-lexicon-prism.png`;
 const vocabiAppIconImage = `${basePath}/icons/vocabi-app-icon.png`;
-const vocabiAvatarImage = `${basePath}/icons/vocabi-avatar-profile.png`;
+const vocabiBadgePackImage = `${basePath}/icons/vocabi-badge-pack.png`;
+const vocabiBackgroundPackImage = `${basePath}/icons/vocabi-background-pack.png`;
+const vocabiDashboardHeroImage = `${basePath}/icons/vocabi-dashboard-hero.png`;
+const vocabiLessonAssetImage = `${basePath}/icons/vocabi-lesson-asset.png`;
+const vocabiLessonCompleteBadgeImage = `${basePath}/icons/vocabi-lesson-complete-badge.png`;
 const vocabiMarkImage = `${basePath}/icons/vocabi-mark.png`;
+const vocabiProfileHeroImage = `${basePath}/icons/vocabi-profile-hero.png`;
+const vocabiStatsAnalyticsImage = `${basePath}/icons/vocabi-stats-analytics.png`;
+const vocabiStickerPackImage = `${basePath}/icons/vocabi-sticker-pack.png`;
 const vocabiWordmarkImage = `${basePath}/icons/vocabi-wordmark.png`;
 
 export function VocabiApp() {
@@ -157,12 +163,17 @@ function Onboarding({ onComplete }: { onComplete: (dailyGoalXp: number) => Promi
               <Image src={vocabiAppIconImage} alt="" fill sizes="56px" className="object-cover" priority />
             </div>
             <div>
-              <Image src={vocabiWordmarkImage} alt="Vocabi" width={180} height={60} className="h-8 w-auto object-contain object-left" priority />
+              <Image src={vocabiWordmarkImage} alt="Vocabi" width={180} height={60} className="h-8 w-auto object-contain object-left mix-blend-screen" priority />
               <h1 className="text-3xl font-black leading-tight">Ta mission anglais commence.</h1>
             </div>
           </div>
-          <div className="overflow-hidden rounded-[2rem] border border-amber-300/20 bg-slate-950 shadow-[0_26px_70px_rgba(0,0,0,0.45)]">
-            <Image src={lexiconPrismImage} alt="" width={720} height={1080} className="w-full object-cover" style={{ height: "18rem", opacity: 0.86 }} priority />
+          <div className="relative overflow-hidden rounded-[2rem] border border-amber-300/20 bg-slate-950 shadow-[0_26px_70px_rgba(0,0,0,0.45)]">
+            <Image src={vocabiLessonAssetImage} alt="" width={1122} height={1402} className="h-[18rem] w-full object-cover object-[50%_36%] opacity-90" priority />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0)_38%,rgba(5,7,11,0.88)_100%)]" />
+            <div className="absolute bottom-4 left-4 right-4">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-300">Mentor Vocabi</p>
+              <p className="mt-1 text-sm font-bold leading-6 text-slate-200">Des mots, des réflexes, une progression qui reste à toi.</p>
+            </div>
           </div>
           <Card className="space-y-5 border-slate-800 bg-slate-950 text-slate-100">
             <p className="text-base leading-7 text-slate-300">
@@ -234,7 +245,7 @@ function Dashboard({
           <Layers3 className="h-5 w-5" />
         </button>
         <div className="flex min-w-0 flex-1 flex-col items-center">
-          <Image src={vocabiWordmarkImage} alt="Vocabi" width={150} height={50} className="h-7 w-auto max-w-[8.5rem] object-contain" priority />
+          <Image src={vocabiWordmarkImage} alt="Vocabi" width={150} height={50} className="h-7 w-auto max-w-[8.5rem] object-contain mix-blend-screen" priority />
           <h1 className="mt-1 text-sm font-black uppercase tracking-[0.22em] text-slate-100">Daily Mission</h1>
         </div>
         <VocabiMark />
@@ -243,8 +254,8 @@ function Dashboard({
       {lessonResult && <LessonResultCard result={lessonResult} onDismiss={onDismissResult} />}
 
       <section className="relative overflow-hidden rounded-[2rem] border border-amber-300/20 bg-slate-950 shadow-[0_26px_70px_rgba(0,0,0,0.48)]">
-        <Image src={lexiconPrismImage} alt="" width={720} height={1080} className="w-full object-cover" style={{ height: "20rem", opacity: 0.82 }} priority />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.08)_0%,rgba(5,7,11,0.45)_42%,rgba(5,7,11,0.96)_100%)]" />
+        <Image src={vocabiDashboardHeroImage} alt="" width={1122} height={1402} className="h-[22rem] w-full object-cover object-[50%_26%] opacity-90" priority />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.22)_0%,rgba(5,7,11,0.36)_42%,rgba(5,7,11,0.98)_100%)]" />
         <div className="absolute left-5 right-5 top-5 flex items-start justify-between gap-4">
           <div>
             <p className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/35 bg-black/40 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-amber-200 backdrop-blur">
@@ -262,7 +273,7 @@ function Dashboard({
           </div>
         </div>
 
-        <div className="relative space-y-4 p-5 pt-0" style={{ marginTop: "-4.5rem" }}>
+        <div className="relative space-y-4 p-5 pt-0" style={{ marginTop: "-5.75rem" }}>
           <p className="max-w-[18rem] text-sm font-bold leading-6 text-slate-300">{nextLesson.description}</p>
 
           <div className="grid grid-cols-3 gap-2">
@@ -376,15 +387,24 @@ function VocabiMark() {
 function LessonResultCard({ result, onDismiss }: { result: LessonResult; onDismiss: () => void }) {
   return (
     <motion.div initial={{ opacity: 0, y: -12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}>
-      <Card className="space-y-4 overflow-hidden border-amber-300/35 bg-[linear-gradient(135deg,rgba(246,199,86,0.18)_0%,rgba(15,23,42,0.92)_100%)] text-slate-100">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="flex items-center gap-1.5 text-sm font-black uppercase tracking-[0.14em] text-amber-700">
+      <Card className="space-y-4 overflow-hidden border-amber-300/35 bg-slate-950 p-0 text-slate-100 shadow-[0_24px_60px_rgba(0,0,0,0.42)]">
+        <div className="relative min-h-44 p-5">
+          <Image src={vocabiLessonCompleteBadgeImage} alt="" fill sizes="384px" className="object-cover object-center opacity-85" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.96)_0%,rgba(5,7,11,0.72)_46%,rgba(5,7,11,0.18)_100%)]" />
+          <div className="relative max-w-[13rem]">
+            <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.14em] text-amber-300">
               <Star className="h-4 w-4 fill-amber-300" />
               Leçon terminée
             </p>
-            <h2 className="mt-1 text-4xl font-black tracking-normal">+{result.earnedXp} XP</h2>
-            <p className="text-sm font-bold text-slate-300">{result.correctAnswers}/{result.totalAnswers} bonnes réponses - {result.score}%</p>
+            <h2 className="mt-2 text-4xl font-black tracking-normal">+{result.earnedXp} XP</h2>
+            <p className="mt-1 text-sm font-bold leading-5 text-slate-300">{result.correctAnswers}/{result.totalAnswers} bonnes réponses - {result.score}%</p>
+          </div>
+        </div>
+        <div className="space-y-4 p-5 pt-0">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.14em] text-amber-300">Récompense active</p>
+            <p className="mt-1 text-sm font-bold text-slate-400">Ta maîtrise progresse.</p>
           </div>
           <div className="grid h-14 w-14 place-items-center rounded-3xl bg-amber-300 text-amber-950">
             <Trophy className="h-7 w-7" />
@@ -393,6 +413,7 @@ function LessonResultCard({ result, onDismiss }: { result: LessonResult; onDismi
         <ProgressBar value={result.score} className="bg-white/10" />
         {result.newBadges.length > 0 && <p className="text-sm font-bold text-amber-900">Nouveau badge débloqué !</p>}
         <Button variant="secondary" className="w-full" onClick={onDismiss}>Continuer</Button>
+        </div>
       </Card>
     </motion.div>
   );
@@ -402,6 +423,16 @@ function LessonsView({ progress, onStartLesson }: { progress: ReturnType<typeof 
   return (
     <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-5">
       <PageTitle eyebrow="Parcours" title="Tes unités" />
+      <section className="relative overflow-hidden rounded-[1.6rem] border border-amber-300/20 bg-slate-950 shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
+        <Image src={vocabiLessonAssetImage} alt="" width={1122} height={1402} className="h-48 w-full object-cover object-[50%_42%] opacity-80" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.96)_0%,rgba(5,7,11,0.72)_46%,rgba(5,7,11,0.16)_100%)]" />
+        <div className="absolute inset-0 flex items-end p-4">
+          <div className="max-w-[13rem]">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-300">Nouveaux mots</p>
+            <h2 className="mt-1 text-2xl font-black leading-tight text-white">Choisis ta prochaine mission.</h2>
+          </div>
+        </div>
+      </section>
       {units.map((unit) => (
         <section key={unit.id} className="space-y-3">
           <div>
@@ -447,6 +478,22 @@ function StatsView({ progress }: { progress: ReturnType<typeof useVocabiProgress
   return (
     <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-5">
       <PageTitle eyebrow="Progression" title="Tes stats" />
+      <section className="relative overflow-hidden rounded-[1.8rem] border border-amber-300/20 bg-slate-950 shadow-[0_24px_60px_rgba(0,0,0,0.38)]">
+        <Image src={vocabiStatsAnalyticsImage} alt="" width={1122} height={1402} className="h-60 w-full object-cover object-[50%_35%] opacity-86" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.08)_0%,rgba(5,7,11,0.72)_58%,rgba(5,7,11,0.98)_100%)]" />
+        <div className="absolute bottom-0 left-0 right-0 p-5">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-300">Analytics</p>
+          <div className="mt-2 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-4xl font-black text-white">{progress.accuracy}%</p>
+              <p className="text-sm font-bold text-slate-300">Précision globale</p>
+            </div>
+            <div className="rounded-full border border-amber-300/25 bg-black/45 px-3 py-2 text-sm font-black text-amber-200 backdrop-blur">
+              {progress.totalExercises} exercices
+            </div>
+          </div>
+        </div>
+      </section>
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="XP total" value={progress.totalXp.toString()} />
         <StatCard label="Précision" value={`${progress.accuracy}%`} />
@@ -481,6 +528,14 @@ function StatsView({ progress }: { progress: ReturnType<typeof useVocabiProgress
           ))
         )}
       </Card>
+      <section className="relative overflow-hidden rounded-[1.6rem] border border-slate-800 bg-slate-950 p-4">
+        <Image src={vocabiBadgePackImage} alt="" width={1254} height={1254} className="absolute inset-0 h-full w-full object-cover object-center opacity-25" />
+        <div className="relative">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-300">Achievements</p>
+          <h2 className="mt-1 text-xl font-black text-white">{progress.badges.length}/{badgeDefinitions.length} badges</h2>
+          <p className="mt-1 text-sm font-bold leading-6 text-slate-400">Les récompenses se rempliront au fil des sessions.</p>
+        </div>
+      </section>
     </motion.section>
   );
 }
@@ -610,15 +665,15 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
 function ProfileIdentityCard({ progress }: { progress: ReturnType<typeof useVocabiProgress> }) {
   return (
     <Card className="overflow-hidden border-amber-300/24 bg-slate-950 p-0 text-slate-100 shadow-[0_24px_60px_rgba(0,0,0,0.34)]">
-      <div className="relative min-h-44 p-5">
-        <Image src={vocabiAvatarImage} alt="" fill sizes="384px" className="object-cover opacity-80" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.98)_0%,rgba(5,7,11,0.78)_42%,rgba(5,7,11,0.25)_100%)]" />
+      <div className="relative min-h-72 p-5">
+        <Image src={vocabiProfileHeroImage} alt="" fill sizes="384px" className="object-cover object-[50%_20%] opacity-86" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.28)_0%,rgba(5,7,11,0.55)_48%,rgba(5,7,11,0.98)_100%)]" />
         <div className="relative flex h-full flex-col justify-between gap-8">
           <div>
-            <Image src={vocabiWordmarkImage} alt="Vocabi" width={170} height={57} className="h-8 w-auto object-contain object-left" />
+            <Image src={vocabiWordmarkImage} alt="Vocabi" width={170} height={57} className="h-8 w-auto object-contain object-left mix-blend-screen" />
             <p className="mt-2 max-w-[13rem] text-sm font-bold leading-6 text-slate-300">Ton identité locale reste sur ton appareil.</p>
           </div>
-          <div className="grid max-w-[14.5rem] grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <ProfileMiniStat label="XP" value={progress.totalXp.toString()} />
             <ProfileMiniStat label="Série" value={`${progress.streak}j`} />
             <ProfileMiniStat label="Badges" value={progress.badges.length.toString()} />
@@ -722,7 +777,13 @@ function LessonSession({
               transition={{ duration: 0.28 }}
               className="space-y-4"
             >
-              <Card className="space-y-4 border-amber-300/18 bg-slate-950 text-slate-100 shadow-[0_24px_58px_rgba(0,0,0,0.35)]">
+              <Card className="space-y-4 overflow-hidden border-amber-300/18 bg-slate-950 p-0 text-slate-100 shadow-[0_24px_58px_rgba(0,0,0,0.35)]">
+                <div className="relative h-28">
+                  <Image src={vocabiBackgroundPackImage} alt="" fill sizes="384px" className="object-cover object-[50%_75%] opacity-50" />
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.05)_0%,rgba(15,23,42,0.96)_100%)]" />
+                  <StickerCrop />
+                </div>
+                <div className="space-y-4 p-5 pt-0">
                 <div className="flex items-center justify-between gap-3">
                   <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.12em]", exerciseTone.className)}>
                     {exerciseTone.icon}
@@ -735,6 +796,7 @@ function LessonSession({
                   <h1 className="mt-3 text-[2rem] font-black leading-tight tracking-normal">{exercise.prompt}</h1>
                 </div>
                 {exercise.hint && <p className="rounded-2xl border border-sky-300/20 bg-sky-300/10 p-3 text-sm font-bold leading-6 text-sky-100">Indice: {exercise.hint}</p>}
+                </div>
               </Card>
               <ExerciseInput exercise={exercise} answer={answer} onChange={setAnswer} disabled={feedback !== null || finishing} />
             </motion.section>
@@ -796,6 +858,20 @@ function getExerciseTone(kind: Exercise["kind"]) {
     className: "bg-violet-300 text-slate-950",
     icon: <Sparkles className="h-3.5 w-3.5" />,
   };
+}
+
+function StickerCrop() {
+  return (
+    <div className="absolute right-4 top-3 h-24 w-28 overflow-hidden rounded-2xl">
+      <Image
+        src={vocabiStickerPackImage}
+        alt=""
+        width={1254}
+        height={1254}
+        className="absolute -left-[7.6rem] -top-2 h-[22rem] w-[22rem] max-w-none object-cover opacity-95"
+      />
+    </div>
+  );
 }
 
 function ExerciseInput({
