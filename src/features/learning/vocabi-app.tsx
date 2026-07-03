@@ -49,6 +49,10 @@ type LessonResult = {
 const goalOptions = [20, 30, 50];
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const lexiconPrismImage = `${basePath}/icons/vocabi-lexicon-prism.png`;
+const vocabiAppIconImage = `${basePath}/icons/vocabi-app-icon.png`;
+const vocabiAvatarImage = `${basePath}/icons/vocabi-avatar-profile.png`;
+const vocabiMarkImage = `${basePath}/icons/vocabi-mark.png`;
+const vocabiWordmarkImage = `${basePath}/icons/vocabi-wordmark.png`;
 
 export function VocabiApp() {
   const progress = useVocabiProgress();
@@ -86,7 +90,7 @@ export function VocabiApp() {
   return (
     <main className="min-h-dvh text-slate-100" style={{ background: "#05070b" }}>
       <div
-        className="mx-auto min-h-dvh w-full max-w-md px-4 pb-28 pt-4"
+        className="mx-auto min-h-dvh w-full max-w-md px-4 pb-[calc(env(safe-area-inset-bottom)+7.25rem)] pt-[calc(env(safe-area-inset-top)+1rem)]"
         style={{ background: "radial-gradient(circle at 50% -10%, rgba(246,199,86,0.18), transparent 34%), linear-gradient(180deg, #080d14 0%, #05070b 45%, #070a10 100%)" }}
       >
         <AnimatePresence mode="wait">
@@ -113,7 +117,7 @@ export function VocabiApp() {
 
 function LoadingScreen() {
   return (
-    <main className="grid min-h-dvh place-items-center bg-[#05070b] px-6 text-slate-100">
+    <main className="grid min-h-dvh place-items-center bg-[#05070b] px-6 pt-[env(safe-area-inset-top)] text-slate-100">
       <div className="w-full max-w-sm space-y-4">
         <div className="h-16 w-16 animate-pulse rounded-3xl bg-amber-300" />
         <div className="h-8 w-40 animate-pulse rounded-full bg-white/10" />
@@ -125,7 +129,7 @@ function LoadingScreen() {
 
 function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <main className="grid min-h-dvh place-items-center bg-[#05070b] px-5 text-slate-100">
+    <main className="grid min-h-dvh place-items-center bg-[#05070b] px-5 pt-[env(safe-area-inset-top)] text-slate-100">
       <Card className="max-w-sm space-y-4 border-rose-400/30 bg-slate-950 text-slate-100">
         <div className="grid h-12 w-12 place-items-center rounded-2xl bg-rose-100 text-rose-700">
           <X className="h-6 w-6" />
@@ -145,15 +149,15 @@ function Onboarding({ onComplete }: { onComplete: (dailyGoalXp: number) => Promi
   const [saving, setSaving] = useState(false);
 
   return (
-    <main className="min-h-dvh bg-[#05070b] px-5 py-6 text-slate-100">
-      <div className="mx-auto flex min-h-[calc(100dvh-3rem)] max-w-md flex-col justify-between">
+    <main className="min-h-dvh bg-[#05070b] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+1.5rem)] text-slate-100">
+      <div className="mx-auto flex min-h-[calc(100dvh-env(safe-area-inset-top)-3rem)] max-w-md flex-col justify-between">
         <section className="space-y-6 pt-2">
           <div className="flex items-center gap-3">
-            <div className="grid h-14 w-14 place-items-center rounded-3xl bg-amber-300 text-slate-950 shadow-[0_0_34px_rgba(246,199,86,0.24)]">
-              <Sparkles className="h-7 w-7" />
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-3xl border border-amber-300/25 bg-slate-950 shadow-[0_0_34px_rgba(246,199,86,0.24)]">
+              <Image src={vocabiAppIconImage} alt="" fill sizes="56px" className="object-cover" priority />
             </div>
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-300">Vocabi</p>
+              <Image src={vocabiWordmarkImage} alt="Vocabi" width={180} height={60} className="h-8 w-auto object-contain object-left" priority />
               <h1 className="text-3xl font-black leading-tight">Ta mission anglais commence.</h1>
             </div>
           </div>
@@ -229,8 +233,8 @@ function Dashboard({
         <button type="button" aria-label="Menu" className="grid h-11 w-11 place-items-center rounded-2xl border border-slate-800 bg-slate-950 text-slate-300">
           <Layers3 className="h-5 w-5" />
         </button>
-        <div className="text-center">
-          <p className="text-[0.68rem] font-black uppercase tracking-[0.32em] text-amber-300">Vocabi</p>
+        <div className="flex min-w-0 flex-1 flex-col items-center">
+          <Image src={vocabiWordmarkImage} alt="Vocabi" width={150} height={50} className="h-7 w-auto max-w-[8.5rem] object-contain" priority />
           <h1 className="mt-1 text-sm font-black uppercase tracking-[0.22em] text-slate-100">Daily Mission</h1>
         </div>
         <VocabiMark />
@@ -362,9 +366,9 @@ function Metric({ icon, label, value, tone }: { icon: ReactNode; label: string; 
 
 function VocabiMark() {
   return (
-    <div className="relative grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-amber-300/25 bg-slate-950 text-amber-200 shadow-[0_0_24px_rgba(246,199,86,0.16)]">
+    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl border border-amber-300/25 bg-slate-950 shadow-[0_0_24px_rgba(246,199,86,0.16)]">
+      <Image src={vocabiMarkImage} alt="Profil Vocabi" fill sizes="48px" className="object-cover" />
       <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-emerald-300 ring-4 ring-slate-950" />
-      <span className="text-xl font-black tracking-normal">V</span>
     </div>
   );
 }
@@ -511,6 +515,7 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
   return (
     <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-5">
       <PageTitle eyebrow="Local-first" title="Profil & sauvegarde" />
+      <ProfileIdentityCard progress={progress} />
       <Card className="space-y-4">
         <div>
           <h2 className="text-lg font-black">Objectif quotidien</h2>
@@ -602,6 +607,37 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
   );
 }
 
+function ProfileIdentityCard({ progress }: { progress: ReturnType<typeof useVocabiProgress> }) {
+  return (
+    <Card className="overflow-hidden border-amber-300/24 bg-slate-950 p-0 text-slate-100 shadow-[0_24px_60px_rgba(0,0,0,0.34)]">
+      <div className="relative min-h-44 p-5">
+        <Image src={vocabiAvatarImage} alt="" fill sizes="384px" className="object-cover opacity-80" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.98)_0%,rgba(5,7,11,0.78)_42%,rgba(5,7,11,0.25)_100%)]" />
+        <div className="relative flex h-full flex-col justify-between gap-8">
+          <div>
+            <Image src={vocabiWordmarkImage} alt="Vocabi" width={170} height={57} className="h-8 w-auto object-contain object-left" />
+            <p className="mt-2 max-w-[13rem] text-sm font-bold leading-6 text-slate-300">Ton identité locale reste sur ton appareil.</p>
+          </div>
+          <div className="grid max-w-[14.5rem] grid-cols-3 gap-2">
+            <ProfileMiniStat label="XP" value={progress.totalXp.toString()} />
+            <ProfileMiniStat label="Série" value={`${progress.streak}j`} />
+            <ProfileMiniStat label="Badges" value={progress.badges.length.toString()} />
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function ProfileMiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/76 p-2 backdrop-blur">
+      <p className="text-lg font-black leading-none text-white">{value}</p>
+      <p className="mt-1 text-[0.65rem] font-black uppercase tracking-[0.08em] text-amber-300">{label}</p>
+    </div>
+  );
+}
+
 function PageTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <header className="pt-1">
@@ -661,8 +697,8 @@ function LessonSession({
   };
 
   return (
-    <main className="min-h-dvh bg-[#05070b] px-4 py-5 text-slate-100">
-      <div className="mx-auto flex min-h-[calc(100dvh-2.5rem)] max-w-md flex-col">
+    <main className="min-h-dvh bg-[#05070b] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+1rem)] text-slate-100">
+      <div className="mx-auto flex min-h-[calc(100dvh-env(safe-area-inset-top)-2rem)] max-w-md flex-col">
         <header className="mb-5 flex items-center gap-3">
           <button type="button" onClick={onBack} aria-label="Retour" className="grid h-11 w-11 place-items-center rounded-2xl border border-slate-800 bg-slate-950 text-slate-300 shadow-sm">
             <ArrowLeft className="h-5 w-5" />
