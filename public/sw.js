@@ -1,15 +1,30 @@
-﻿const CACHE_NAME = "vocabi-cache-v1";
-const SHELL_ASSETS = ["./", "./manifest.webmanifest", "./icons/vocabi.svg"];
+const CACHE_NAME = "vocabi-cache-v2";
+const BASE_PATH = self.location.pathname.replace(/\/sw\.js$/, "");
+const withBasePath = (path) => `${BASE_PATH}${path}`;
+
+const SHELL_ASSETS = [
+  withBasePath("/"),
+  withBasePath("/manifest.webmanifest"),
+  withBasePath("/icons/favicon-32.png"),
+  withBasePath("/icons/apple-touch-icon.png"),
+  withBasePath("/icons/icon-192.png"),
+  withBasePath("/icons/icon-512.png"),
+  withBasePath("/icons/vocabi-lexicon-prism.png"),
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS)).then(() => self.skipWaiting()),
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(SHELL_ASSETS))
+      .then(() => self.skipWaiting()),
   );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys()
+    caches
+      .keys()
       .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
       .then(() => self.clients.claim()),
   );
@@ -17,6 +32,12 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") {
+    return;
+  }
+
+  const requestUrl = new URL(event.request.url);
+
+  if (!["http:", "https:"].includes(requestUrl.protocol)) {
     return;
   }
 
@@ -36,7 +57,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           return response;
         })
-        .catch(() => caches.match("./"));
+        .catch(() => caches.match(withBasePath("/")));
     }),
   );
 });

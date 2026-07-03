@@ -13,7 +13,7 @@ const items: Array<{ id: Tab; label: string; icon: typeof Home }> = [
 export function MobileNav({ activeTab, onChange }: { activeTab: Tab; onChange: (tab: Tab) => void }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.55rem)] pt-2 sm:left-1/2 sm:max-w-md sm:-translate-x-1/2">
-      <div className="grid grid-cols-4 gap-1.5 rounded-[1.65rem] border border-slate-200/70 bg-white/94 p-1.5 shadow-[0_-16px_46px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+      <div className="grid grid-cols-4 gap-1.5 rounded-[1.65rem] border border-amber-300/15 bg-slate-950/94 p-1.5 shadow-[0_-18px_54px_rgba(0,0,0,0.42)] backdrop-blur-xl">
         {items.map((item) => {
           const Icon = item.icon;
           const active = item.id === activeTab;
@@ -24,7 +24,9 @@ export function MobileNav({ activeTab, onChange }: { activeTab: Tab; onChange: (
               onClick={() => onChange(item.id)}
               className={cn(
                 "flex min-h-12 flex-col items-center justify-center gap-1 rounded-[1rem] text-[0.68rem] font-extrabold transition active:scale-95",
-                active ? "bg-emerald-100 text-emerald-800 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.16)]" : "text-slate-500 hover:bg-slate-100",
+                active
+                  ? "bg-slate-900 text-amber-300 shadow-[inset_0_0_0_1px_rgba(246,199,86,0.24),0_0_18px_rgba(246,199,86,0.14)]"
+                  : "text-slate-500 hover:bg-slate-900 hover:text-slate-200",
               )}
             >
               <Icon className="h-5 w-5" aria-hidden="true" />

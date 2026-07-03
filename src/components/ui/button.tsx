@@ -8,9 +8,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: "bg-emerald-500 text-white shadow-[0_7px_0_#059669] hover:bg-emerald-400",
-        secondary: "bg-sky-100 text-sky-950 shadow-[0_5px_0_#bae6fd] hover:bg-sky-50",
+        secondary: "border border-amber-300/25 bg-slate-900 text-slate-100 shadow-[0_5px_0_#020617] hover:bg-slate-800",
         ghost: "bg-transparent text-slate-700 hover:bg-slate-100",
-        danger: "bg-rose-500 text-white shadow-[0_7px_0_#be123c] hover:bg-rose-400",
+        danger: "bg-rose-600 text-white shadow-[0_7px_0_#7f1d1d] hover:bg-rose-500",
       },
       size: {
         default: "h-12",

@@ -1,58 +1,67 @@
-﻿# Vocabi UI Guidelines
+# Vocabi UI Guidelines
 
 ## Direction artistique
-Vocabi doit paraitre joyeuse, premium et tactile sans copier Duolingo. L'identite visuelle doit evoquer des cartes de vocabulaire, une progression claire et une energie douce.
+Vocabi doit devenir une application mobile premium, immersive et motivante pour apprendre l'anglais. La reference visuelle est une DA dark cinematic: noir profond, or lumineux, halos, cartes glass, progression de mission et illustrations fortes. L'app doit donner l'impression d'entrer dans un entrainement personnel de vocabulaire, pas dans un outil scolaire classique.
+
+## Promesse visuelle
+- Apprendre l'anglais comme une mission quotidienne.
+- Transformer les mots en objets lumineux: cartes, prismes, halos, fragments de lettres.
+- Donner de la valeur a chaque petite action: XP, streak, badges, progression.
+- Rester lisible et mobile-first malgre l'ambiance premium.
 
 ## Principes
+- Dark mode principal.
 - Mobile-first strict.
-- Light mode d'abord.
-- Gros boutons tactiles.
-- Hierarchie visuelle forte.
-- Aucun ecran brut.
-- Pas de landing page marketing: l'app est l'experience.
-- Desktop correct, mais secondaire.
+- Pas de landing page: l'app est l'experience.
+- Surfaces profondes, cartes sombres, reflets subtils.
+- Illustrations fortes en premier viewport quand possible.
+- Boutons tactiles larges avec effet premium.
+- Navigation basse sombre, compacte et iconique.
+- Aucun ecran brut ou generique.
+- Desktop correct mais secondaire.
 
-## Palette initiale
-- Fond: blanc casse tres lumineux.
-- Texte principal: encre profonde.
-- Accent principal: vert menthe energique.
-- Accent secondaire: bleu ciel propre.
-- Reussite: vert clair.
-- Erreur: corail.
-- XP/streak: jaune soleil.
-- Surfaces: blanc, ivoire leger, bordures subtiles.
+## Palette
+- Fond principal: noir bleute tres profond `#05070b`.
+- Surfaces: charbon `#0b1118`, ardoise sombre `#111827`.
+- Texte principal: ivoire froid `#f8fafc`.
+- Texte secondaire: bleu-gris `#94a3b8`.
+- Accent premium: or `#f6c756`, ambre `#d7a83f`.
+- Accent apprentissage: emeraude `#34d399`.
+- Erreur: corail/rouge profond `#fb7185`.
+- Bordures: blanc faible, or faible, jamais de bordures noires dures.
 
 ## Typographie
-Utiliser Geist par defaut au depart. Titres courts et denses, corps tres lisible, boutons larges. Pas de texte minuscule pour les actions importantes.
+Geist reste la base. Les titres sont courts, denses, tres contrastes. Les labels peuvent etre en uppercase avec tracking positif pour l'effet premium. Ne pas utiliser de texte minuscule pour les actions importantes.
+
+## Illustrations et assets
+- Utiliser des images raster generees ou selectionnees pour les heros et cartes fortes.
+- Style cible: cinematic dark premium, halo or, lettres lumineuses, objets lexicaux, surfaces reflechissantes.
+- Eviter de copier des references existantes: pas de personnage, logo, armure ou marque reconnaissable.
+- Les assets doivent etre originaux et lies a Vocabi: prisme de vocabulaire, cartes de mots, fragments de phrases, mission d'apprentissage.
 
 ## Radius et ombres
-- Cartes: 8px a 16px selon contexte, sans exces.
-- Boutons principaux: arrondi confortable, effet pressed.
-- Ombres: douces, utiles pour la profondeur tactile.
-
-## Navigation mobile
-Navigation basse avec icones lucide: Accueil, Lecons, Stats, Profil/Reglages. Les actions principales doivent rester accessibles au pouce.
+- Grandes cartes: 24px a 32px, sans angles trop carres.
+- Petites puces et boutons: formes pilules ou cercles.
+- Ombres profondes, halos or/emeraude discrets.
+- Eviter les contours noirs durs; preferer glow, blur, border translucide.
 
 ## Dashboard
-- Header avec salutation, streak, XP.
-- Carte objectif quotidien.
-- Prochaine lecon mise en avant.
-- Liste d'unites lisible.
-- Progression visible sans surcharge.
+- Premier ecran immersif avec hero image ou visuel fort.
+- Afficher la mission du jour, XP, streak et prochaine lecon dans une composition premium.
+- Progression visible sous forme d'anneau, barre lumineuse ou tracker de mission.
+- Le parcours d'unite doit ressembler a une roadmap, pas a une liste administrative.
 
 ## Lecon
-- Barre de progression en haut.
-- Carte question stable.
-- Zone reponse claire.
-- Feedback sticky en bas apres validation.
-- Bouton principal toujours lisible.
+- Barre de progression claire en haut.
+- Carte question sombre, stable et lisible.
+- Reponses sous forme de grandes cartes tactiles.
+- Feedback sticky en bas, lumineux et immediat.
+- Bonne reponse: halo emeraude/or. Erreur: corail sobre, jamais agressif.
 
-## Resultat
-- Celebration sobre.
-- XP gagne.
-- Score.
-- Temps ou nombre d'erreurs si pertinent.
-- Prochaine action claire.
+## Profil, stats et sauvegarde
+- Profil comme cockpit local: streak, XP, badges, objectif.
+- Stats sous forme de cartes sombres et graphiques simples.
+- Sauvegarde/import/reset restent clairs mais integres a la DA.
 
 ## Accessibilite
-Contraste suffisant, focus visible, tailles tactiles confortables, textes explicites, pas de feedback uniquement par couleur.
+Contraste fort, focus visible, tailles tactiles confortables, textes explicites. Le feedback ne doit jamais dependre seulement de la couleur.
