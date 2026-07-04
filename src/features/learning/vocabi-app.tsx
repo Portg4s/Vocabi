@@ -469,7 +469,6 @@ function VocabiMark() {
   return (
     <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl border border-amber-300/25 bg-slate-950 shadow-[0_0_24px_rgba(246,199,86,0.16)]">
       <Image src={vocabiMarkImage} alt="Profil Vocabi" fill sizes="48px" className="object-cover" />
-      <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-emerald-300 ring-4 ring-slate-950" />
     </div>
   );
 }
