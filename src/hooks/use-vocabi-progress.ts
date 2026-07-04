@@ -5,6 +5,7 @@ import { badgeDefinitions } from "@/data/badges";
 import { allLessons } from "@/data/lessons";
 import { calculateEarnedXp, calculateLessonScore, getExpectedAnswer, todayKey } from "@/features/learning/scoring";
 import { buildReviewQueue, scheduleExerciseMastery, summarizeReview, type ReviewCandidate, type ReviewSummary } from "@/features/learning/review";
+import { defaultAudioSettings, type AudioSettings } from "@/features/learning/speech";
 import { db, ensureProfile, exportVocabiData, importVocabiData, resetVocabiData } from "@/lib/storage/db";
 import type {
   BadgeUnlock,
@@ -34,6 +35,7 @@ export type ProgressSnapshot = {
   exerciseMastery: ExerciseMastery[];
   dailyStats: DailyStats[];
   badges: BadgeUnlock[];
+  audioSettings: AudioSettings;
   reviewQueue: ReviewCandidate[];
   reviewSummary: ReviewSummary;
   totalXp: number;
@@ -55,6 +57,7 @@ function createEmptySnapshot(): ProgressSnapshot {
     exerciseMastery: [],
     dailyStats: [],
     badges: [],
+    audioSettings: defaultAudioSettings,
     reviewQueue: [],
     reviewSummary: summarizeReview([]),
     totalXp: 0,
@@ -152,12 +155,13 @@ export function useVocabiProgress() {
   const refresh = useCallback(async () => {
     try {
       const profile = await ensureProfile();
-      const [lessonProgress, exerciseHistory, exerciseMastery, dailyStats, badges] = await Promise.all([
+      const [lessonProgress, exerciseHistory, exerciseMastery, dailyStats, badges, audioSettingsEntry] = await Promise.all([
         db.lessonProgress.toArray(),
         db.exerciseHistory.toArray(),
         db.exerciseMastery.toArray(),
         db.dailyStats.toArray(),
         db.badges.toArray(),
+        db.settings.get("audio"),
       ]);
       const totalXp = lessonProgress.reduce((sum, lesson) => sum + lesson.xpEarned, 0);
       const today = dailyStats.find((day) => day.date === todayKey());
@@ -172,6 +176,7 @@ export function useVocabiProgress() {
         exerciseMastery,
         dailyStats,
         badges,
+        audioSettings: readAudioSettings(audioSettingsEntry?.value),
         reviewQueue: buildReviewQueue(exerciseMastery),
         reviewSummary: summarizeReview(exerciseMastery),
         totalXp,
@@ -400,16 +405,39 @@ export function useVocabiProgress() {
     await refresh();
   }, [refresh]);
 
+  const updateAudioSettings = useCallback(async (audioSettings: AudioSettings) => {
+    await db.settings.put({
+      key: "audio",
+      value: audioSettings,
+      updatedAt: new Date().toISOString(),
+    });
+    await refresh();
+  }, [refresh]);
+
   return useMemo(() => ({
     ...snapshot,
     completeOnboarding,
     updateDailyGoal,
     completeLesson,
     completeReviewSession,
+    updateAudioSettings,
     getLessonStatus,
     resetData,
     exportData,
     importData,
     refresh,
-  }), [completeLesson, completeOnboarding, completeReviewSession, exportData, getLessonStatus, importData, refresh, resetData, snapshot, updateDailyGoal]);
+  }), [completeLesson, completeOnboarding, completeReviewSession, exportData, getLessonStatus, importData, refresh, resetData, snapshot, updateAudioSettings, updateDailyGoal]);
+}
+
+function readAudioSettings(value: unknown): AudioSettings {
+  if (typeof value !== "object" || value === null) {
+    return defaultAudioSettings;
+  }
+
+  const settings = value as Partial<AudioSettings>;
+
+  return {
+    autoSpeak: settings.autoSpeak ?? defaultAudioSettings.autoSpeak,
+    slowMode: settings.slowMode ?? defaultAudioSettings.slowMode,
+  };
 }

@@ -71,6 +71,10 @@ Stockage principal: IndexedDB via Dexie.js. `localStorage` peut seulement servir
 - value: unknown
 - updatedAt: string
 
+Cle `audio`:
+- autoSpeak: boolean
+- slowMode: boolean
+
 ### meta
 - key: string
 - value: unknown

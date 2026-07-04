@@ -21,11 +21,12 @@ import {
   Star,
   Trophy,
   Upload,
+  Volume2,
   X,
   Zap,
 } from "lucide-react";
 import type { ChangeEvent, ReactNode } from "react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { badgeDefinitions } from "@/data/badges";
 import { allLessons, getExerciseById, getFirstLesson, units } from "@/data/lessons";
 import { errorShake, feedbackVariants, successPulse } from "@/lib/animations/variants";
@@ -37,6 +38,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { getExpectedAnswer, isAnswerCorrect, todayKey } from "@/features/learning/scoring";
 import { buildLexiconEntries, summarizeLexicon, type LexiconEntry, type LexiconStatus } from "@/features/learning/lexicon";
 import type { ReviewCandidate } from "@/features/learning/review";
+import { getExerciseSpeechTarget, speakEnglish, type AudioSettings } from "@/features/learning/speech";
 import { useVocabiProgress } from "@/hooks/use-vocabi-progress";
 import { cn } from "@/lib/utils";
 import type { Exercise, Lesson } from "@/types/learning";
@@ -87,6 +89,7 @@ export function VocabiApp() {
     return (
       <LessonSession
         lesson={activeLesson}
+        audioSettings={progress.audioSettings}
         onBack={() => setActiveLesson(null)}
         onComplete={async (answers) => {
           const result = await progress.completeLesson({ lesson: activeLesson, answers });
@@ -102,6 +105,7 @@ export function VocabiApp() {
     return (
       <LessonSession
         lesson={activeReviewLesson}
+        audioSettings={progress.audioSettings}
         onBack={() => setActiveReviewLesson(null)}
         onComplete={async (answers) => {
           const result = await progress.completeReviewSession({ lesson: activeReviewLesson, answers });
@@ -670,7 +674,7 @@ function LexiconView({ progress }: { progress: ReturnType<typeof useVocabiProgre
             <p className="text-sm leading-6 text-slate-400">Fais une mission ou ajuste la recherche pour remplir ce carnet.</p>
           </Card>
         ) : (
-          visibleEntries.map((entry) => <LexiconCard key={`${entry.lessonId}-${entry.exercise.id}`} entry={entry} />)
+          visibleEntries.map((entry) => <LexiconCard key={`${entry.lessonId}-${entry.exercise.id}`} entry={entry} audioSettings={progress.audioSettings} />)
         )}
       </div>
     </section>
@@ -685,8 +689,9 @@ const lexiconFilters: Array<{ id: "all" | LexiconStatus; label: string }> = [
   { id: "fresh", label: "Nouveaux" },
 ];
 
-function LexiconCard({ entry }: { entry: LexiconEntry }) {
+function LexiconCard({ entry, audioSettings }: { entry: LexiconEntry; audioSettings: AudioSettings }) {
   const statusMeta = getLexiconStatusMeta(entry.status);
+  const speechTarget = getExerciseSpeechTarget(entry.exercise);
 
   return (
     <article className="rounded-[1.35rem] border border-slate-800 bg-slate-950 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.22)]">
@@ -705,6 +710,11 @@ function LexiconCard({ entry }: { entry: LexiconEntry }) {
           <span className="text-sm font-black text-slate-100">{entry.masteryLevel}%</span>
         </div>
       </div>
+      {speechTarget && (
+        <div className="mt-4">
+          <SpeechButton target={speechTarget.text} label={speechTarget.label} audioSettings={audioSettings} variant="wide" />
+        </div>
+      )}
       <div className="mt-4 space-y-2">
         <ProgressBar value={entry.masteryLevel} className="bg-slate-900" />
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-slate-500">
@@ -733,6 +743,46 @@ function getLexiconStatusMeta(status: LexiconStatus) {
   }
 
   return { label: "Nouveau", className: "bg-slate-800 text-slate-300" };
+}
+
+function SpeechButton({
+  target,
+  label,
+  audioSettings,
+  size = "default",
+  variant = "compact",
+}: {
+  target: string;
+  label: string;
+  audioSettings: AudioSettings;
+  size?: "default" | "sm";
+  variant?: "compact" | "wide";
+}) {
+  const [message, setMessage] = useState<string | null>(null);
+
+  return (
+    <div className={cn("min-w-0", variant === "wide" && "w-full")}>
+      <button
+        type="button"
+        aria-label={label}
+        title={label}
+        onClick={() => {
+          const spoken = speakEnglish(target, audioSettings);
+          setMessage(spoken ? "Lecture en cours" : "Audio indisponible sur ce navigateur");
+          window.setTimeout(() => setMessage(null), 1800);
+        }}
+        className={cn(
+          "inline-flex items-center justify-center gap-2 rounded-full border border-emerald-300/24 bg-emerald-300/10 font-black text-emerald-100 transition active:scale-95",
+          size === "sm" ? "h-8 w-8 px-0" : "h-11 px-4 text-sm",
+          variant === "wide" && "w-full",
+        )}
+      >
+        <Volume2 className="h-4 w-4" />
+        {size !== "sm" && <span>Écouter</span>}
+      </button>
+      {message && variant === "wide" && <p className="mt-2 text-xs font-bold text-slate-500">{message}</p>}
+    </div>
+  );
 }
 
 function StatsView({ progress }: { progress: ReturnType<typeof useVocabiProgress> }) {
@@ -903,6 +953,39 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
         </div>
         {goalMessage && <p className="rounded-2xl bg-emerald-50 p-3 text-sm font-bold leading-6 text-emerald-800">{goalMessage}</p>}
       </Card>
+      <Card className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="grid h-14 w-14 place-items-center rounded-3xl bg-emerald-300/10 text-emerald-200">
+            <Volume2 className="h-7 w-7" />
+          </div>
+          <div>
+            <h2 className="text-lg font-black">Audio anglais</h2>
+            <p className="text-sm leading-5 text-slate-400">Lecture locale avec la voix du navigateur.</p>
+          </div>
+        </div>
+        <AudioToggle
+          title="Lecture automatique"
+          description="Lance l'audio au début de chaque question compatible."
+          checked={progress.audioSettings.autoSpeak}
+          disabled={busy}
+          onChange={async (checked) => {
+            setBusy(true);
+            await progress.updateAudioSettings({ ...progress.audioSettings, autoSpeak: checked });
+            setBusy(false);
+          }}
+        />
+        <AudioToggle
+          title="Mode lent"
+          description="Ralentit la prononciation pour mieux distinguer les sons."
+          checked={progress.audioSettings.slowMode}
+          disabled={busy}
+          onChange={async (checked) => {
+            setBusy(true);
+            await progress.updateAudioSettings({ ...progress.audioSettings, slowMode: checked });
+            setBusy(false);
+          }}
+        />
+      </Card>
       <Card className="space-y-3">
         <div className="flex items-center gap-3">
           <div className="grid h-14 w-14 place-items-center rounded-3xl bg-slate-950 text-white">
@@ -988,6 +1071,37 @@ function ProfileIdentityCard({ progress }: { progress: ReturnType<typeof useVoca
   );
 }
 
+function AudioToggle({
+  title,
+  description,
+  checked,
+  disabled,
+  onChange,
+}: {
+  title: string;
+  description: string;
+  checked: boolean;
+  disabled: boolean;
+  onChange: (checked: boolean) => Promise<void>;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => void onChange(!checked)}
+      className="flex w-full items-center justify-between gap-4 rounded-[1.25rem] border border-slate-800 bg-slate-900 p-4 text-left transition active:scale-[0.99] disabled:opacity-50"
+    >
+      <span>
+        <span className="block text-sm font-black text-slate-100">{title}</span>
+        <span className="mt-1 block text-xs font-bold leading-5 text-slate-500">{description}</span>
+      </span>
+      <span className={cn("flex h-8 w-14 shrink-0 items-center rounded-full p-1 transition", checked ? "bg-emerald-300" : "bg-slate-800")}>
+        <span className={cn("h-6 w-6 rounded-full bg-slate-950 shadow-sm transition", checked && "translate-x-6")} />
+      </span>
+    </button>
+  );
+}
+
 function ProfileMiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-slate-950/76 p-2 backdrop-blur">
@@ -1017,10 +1131,12 @@ function StatCard({ label, value }: { label: string; value: string }) {
 
 function LessonSession({
   lesson,
+  audioSettings,
   onBack,
   onComplete,
 }: {
   lesson: Lesson;
+  audioSettings: AudioSettings;
   onBack: () => void;
   onComplete: (answers: Array<{ exercise: Exercise; answer: string | string[]; correct: boolean; durationMs: number }>) => Promise<void>;
 }) {
@@ -1034,6 +1150,15 @@ function LessonSession({
   const exercise = lesson.exercises[index];
   const progressValue = Math.round(((index + (feedback ? 1 : 0)) / lesson.exercises.length) * 100);
   const exerciseTone = getExerciseTone(exercise.kind);
+  const speechTarget = useMemo(() => getExerciseSpeechTarget(exercise), [exercise]);
+
+  useEffect(() => {
+    if (audioSettings.autoSpeak && speechTarget) {
+      const timeout = window.setTimeout(() => speakEnglish(speechTarget.text, audioSettings), 320);
+      return () => window.clearTimeout(timeout);
+    }
+    return undefined;
+  }, [audioSettings, exercise.id, speechTarget]);
 
   const submit = async () => {
     const correct = isAnswerCorrect(exercise, answer);
@@ -1089,11 +1214,14 @@ function LessonSession({
                 </div>
                 <div className="space-y-4 p-5 pt-0">
                 <div className="flex items-center justify-between gap-3">
-                  <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.12em]", exerciseTone.className)}>
-                    {exerciseTone.icon}
-                    {exerciseTone.label}
-                  </span>
-                  <span className="text-sm font-black text-amber-300">+{exercise.xp} XP</span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.12em]", exerciseTone.className)}>
+                      {exerciseTone.icon}
+                      {exerciseTone.label}
+                    </span>
+                    {speechTarget && <SpeechButton target={speechTarget.text} label={speechTarget.label} audioSettings={audioSettings} size="sm" />}
+                  </div>
+                  <span className="shrink-0 text-sm font-black text-amber-300">+{exercise.xp} XP</span>
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-400">{exercise.instruction}</p>
