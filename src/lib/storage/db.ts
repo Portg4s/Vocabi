@@ -4,6 +4,7 @@ import Dexie, { type Table } from "dexie";
 import type {
   BadgeUnlock,
   DailyStats,
+  ExerciseMastery,
   ExerciseHistory,
   LessonProgress,
   UserProfile,
@@ -24,6 +25,7 @@ export class VocabiDatabase extends Dexie {
   userProfile!: Table<UserProfile, string>;
   lessonProgress!: Table<LessonProgress, string>;
   exerciseHistory!: Table<ExerciseHistory, string>;
+  exerciseMastery!: Table<ExerciseMastery, string>;
   dailyStats!: Table<DailyStats, string>;
   badges!: Table<BadgeUnlock, string>;
   settings!: Table<SettingEntry, string>;
@@ -36,6 +38,17 @@ export class VocabiDatabase extends Dexie {
       userProfile: "id",
       lessonProgress: "lessonId, unitId, status, updatedAt",
       exerciseHistory: "id, lessonId, exerciseId, createdAt",
+      dailyStats: "date",
+      badges: "badgeId, unlockedAt, seen",
+      settings: "key",
+      meta: "key",
+    });
+
+    this.version(2).stores({
+      userProfile: "id",
+      lessonProgress: "lessonId, unitId, status, updatedAt",
+      exerciseHistory: "id, lessonId, exerciseId, createdAt",
+      exerciseMastery: "exerciseId, lessonId, unitId, dueAt, masteryLevel, updatedAt",
       dailyStats: "date",
       badges: "badgeId, unlockedAt, seen",
       settings: "key",
@@ -66,10 +79,11 @@ export async function ensureProfile() {
 }
 
 export async function exportVocabiData() {
-  const [userProfile, lessonProgress, exerciseHistory, dailyStats, badges, settings, meta] = await Promise.all([
+  const [userProfile, lessonProgress, exerciseHistory, exerciseMastery, dailyStats, badges, settings, meta] = await Promise.all([
     db.userProfile.toArray(),
     db.lessonProgress.toArray(),
     db.exerciseHistory.toArray(),
+    db.exerciseMastery.toArray(),
     db.dailyStats.toArray(),
     db.badges.toArray(),
     db.settings.toArray(),
@@ -82,6 +96,7 @@ export async function exportVocabiData() {
     userProfile,
     lessonProgress,
     exerciseHistory,
+    exerciseMastery,
     dailyStats,
     badges,
     settings,
@@ -108,16 +123,18 @@ export async function importVocabiData(data: unknown) {
   const userProfile = readArray<UserProfile>(data, "userProfile");
   const lessonProgress = readArray<LessonProgress>(data, "lessonProgress");
   const exerciseHistory = readArray<ExerciseHistory>(data, "exerciseHistory");
+  const exerciseMastery = readArray<ExerciseMastery>(data, "exerciseMastery");
   const dailyStats = readArray<DailyStats>(data, "dailyStats");
   const badges = readArray<BadgeUnlock>(data, "badges");
   const settings = readArray<SettingEntry>(data, "settings");
   const meta = readArray<MetaEntry>(data, "meta");
 
-  await db.transaction("rw", [db.userProfile, db.lessonProgress, db.exerciseHistory, db.dailyStats, db.badges, db.settings, db.meta], async () => {
+  await db.transaction("rw", [db.userProfile, db.lessonProgress, db.exerciseHistory, db.exerciseMastery, db.dailyStats, db.badges, db.settings, db.meta], async () => {
     await Promise.all([
       db.userProfile.clear(),
       db.lessonProgress.clear(),
       db.exerciseHistory.clear(),
+      db.exerciseMastery.clear(),
       db.dailyStats.clear(),
       db.badges.clear(),
       db.settings.clear(),
@@ -127,6 +144,7 @@ export async function importVocabiData(data: unknown) {
     await db.userProfile.bulkPut(userProfile.length > 0 ? userProfile : [{ ...defaultProfile, createdAt: new Date().toISOString() }]);
     await db.lessonProgress.bulkPut(lessonProgress);
     await db.exerciseHistory.bulkPut(exerciseHistory);
+    await db.exerciseMastery.bulkPut(exerciseMastery);
     await db.dailyStats.bulkPut(dailyStats);
     await db.badges.bulkPut(badges);
     await db.settings.bulkPut(settings);
@@ -135,11 +153,12 @@ export async function importVocabiData(data: unknown) {
 }
 
 export async function resetVocabiData() {
-  await db.transaction("rw", [db.userProfile, db.lessonProgress, db.exerciseHistory, db.dailyStats, db.badges, db.settings, db.meta], async () => {
+  await db.transaction("rw", [db.userProfile, db.lessonProgress, db.exerciseHistory, db.exerciseMastery, db.dailyStats, db.badges, db.settings, db.meta], async () => {
     await Promise.all([
       db.userProfile.clear(),
       db.lessonProgress.clear(),
       db.exerciseHistory.clear(),
+      db.exerciseMastery.clear(),
       db.dailyStats.clear(),
       db.badges.clear(),
       db.settings.clear(),

@@ -96,6 +96,20 @@ export type ExerciseHistory = {
   createdAt: string;
 };
 
+export type ExerciseMastery = {
+  exerciseId: string;
+  lessonId: string;
+  unitId: string;
+  dueAt: string;
+  lastReviewedAt: string;
+  intervalDays: number;
+  easeFactor: number;
+  repetitions: number;
+  lapses: number;
+  masteryLevel: number;
+  updatedAt: string;
+};
+
 export type DailyStats = {
   date: string;
   xp: number;

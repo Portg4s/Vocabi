@@ -4,12 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { badgeDefinitions } from "@/data/badges";
 import { allLessons } from "@/data/lessons";
 import { calculateEarnedXp, calculateLessonScore, getExpectedAnswer, todayKey } from "@/features/learning/scoring";
+import { buildReviewQueue, scheduleExerciseMastery, summarizeReview, type ReviewCandidate, type ReviewSummary } from "@/features/learning/review";
 import { db, ensureProfile, exportVocabiData, importVocabiData, resetVocabiData } from "@/lib/storage/db";
 import type {
   BadgeUnlock,
   DailyStats,
   Exercise,
   ExerciseHistory,
+  ExerciseMastery,
   Lesson,
   LessonProgress,
   UserProfile,
@@ -29,8 +31,11 @@ export type ProgressSnapshot = {
   profile: UserProfile | null;
   lessonProgress: LessonProgress[];
   exerciseHistory: ExerciseHistory[];
+  exerciseMastery: ExerciseMastery[];
   dailyStats: DailyStats[];
   badges: BadgeUnlock[];
+  reviewQueue: ReviewCandidate[];
+  reviewSummary: ReviewSummary;
   totalXp: number;
   todayXp: number;
   streak: number;
@@ -47,8 +52,11 @@ function createEmptySnapshot(): ProgressSnapshot {
     profile: null,
     lessonProgress: [],
     exerciseHistory: [],
+    exerciseMastery: [],
     dailyStats: [],
     badges: [],
+    reviewQueue: [],
+    reviewSummary: summarizeReview([]),
     totalXp: 0,
     todayXp: 0,
     streak: 0,
@@ -144,9 +152,10 @@ export function useVocabiProgress() {
   const refresh = useCallback(async () => {
     try {
       const profile = await ensureProfile();
-      const [lessonProgress, exerciseHistory, dailyStats, badges] = await Promise.all([
+      const [lessonProgress, exerciseHistory, exerciseMastery, dailyStats, badges] = await Promise.all([
         db.lessonProgress.toArray(),
         db.exerciseHistory.toArray(),
+        db.exerciseMastery.toArray(),
         db.dailyStats.toArray(),
         db.badges.toArray(),
       ]);
@@ -160,8 +169,11 @@ export function useVocabiProgress() {
         profile,
         lessonProgress,
         exerciseHistory,
+        exerciseMastery,
         dailyStats,
         badges,
+        reviewQueue: buildReviewQueue(exerciseMastery),
+        reviewSummary: summarizeReview(exerciseMastery),
         totalXp,
         todayXp: today?.xp ?? 0,
         streak: calculateStreak(dailyStats),
@@ -205,6 +217,7 @@ export function useVocabiProgress() {
     const date = todayKey();
     const existingLesson = await db.lessonProgress.get(lesson.id);
     const existingDay = await db.dailyStats.get(date);
+    const existingMastery = await db.exerciseMastery.bulkGet(answers.map((answer) => answer.exercise.id));
     const history: ExerciseHistory[] = answers.map((answer) => ({
       id: `${lesson.id}-${answer.exercise.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       lessonId: lesson.id,
@@ -235,11 +248,92 @@ export function useVocabiProgress() {
       correctAnswers: (existingDay?.correctAnswers ?? 0) + correctAnswers,
       wrongAnswers: (existingDay?.wrongAnswers ?? 0) + answers.length - correctAnswers,
     };
+    const masteryUpdates = answers.map((answer, index) => scheduleExerciseMastery({
+      current: existingMastery[index],
+      lessonId: existingMastery[index]?.lessonId ?? lesson.id,
+      unitId: existingMastery[index]?.unitId ?? lesson.unitId,
+      exerciseId: answer.exercise.id,
+      correct: answer.correct,
+    }));
 
-    await db.transaction("rw", db.lessonProgress, db.dailyStats, db.exerciseHistory, async () => {
+    await db.transaction("rw", db.lessonProgress, db.dailyStats, db.exerciseHistory, db.exerciseMastery, async () => {
       await db.lessonProgress.put(nextProgress);
       await db.dailyStats.put(nextDay);
       await db.exerciseHistory.bulkPut(history);
+      await db.exerciseMastery.bulkPut(masteryUpdates);
+    });
+
+    const [allProgress, allDailyStats, currentBadges] = await Promise.all([
+      db.lessonProgress.toArray(),
+      db.dailyStats.toArray(),
+      db.badges.toArray(),
+    ]);
+    const completedLessons = allProgress.filter((item) => item.status === "completed" || item.status === "mastered").length;
+    const streak = calculateStreak(allDailyStats);
+    const newBadges = resolveBadges({
+      score,
+      completedLessons,
+      todayXp: nextDay.xp,
+      dailyGoalXp: profile.dailyGoalXp,
+      streak,
+      currentBadges,
+    });
+
+    if (newBadges.length > 0) {
+      await db.badges.bulkPut(newBadges);
+    }
+
+    await refresh();
+
+    return {
+      score,
+      earnedXp,
+      correctAnswers,
+      totalAnswers: answers.length,
+      newBadges,
+    };
+  }, [refresh]);
+
+  const completeReviewSession = useCallback(async ({ lesson, answers }: CompleteLessonInput) => {
+    const profile = await ensureProfile();
+    const correctAnswers = answers.filter((answer) => answer.correct).length;
+    const baseXp = answers.reduce((sum, answer) => sum + Math.max(4, Math.round(answer.exercise.xp * 0.65)), 0);
+    const score = calculateLessonScore(answers.length, correctAnswers);
+    const earnedXp = calculateEarnedXp(baseXp, score);
+    const now = new Date().toISOString();
+    const date = todayKey();
+    const existingDay = await db.dailyStats.get(date);
+    const existingMastery = await db.exerciseMastery.bulkGet(answers.map((answer) => answer.exercise.id));
+    const history: ExerciseHistory[] = answers.map((answer) => ({
+      id: `${lesson.id}-${answer.exercise.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      lessonId: lesson.id,
+      exerciseId: answer.exercise.id,
+      correct: answer.correct,
+      answer: answer.answer,
+      expected: getExpectedAnswer(answer.exercise),
+      durationMs: answer.durationMs,
+      createdAt: now,
+    }));
+    const nextDay: DailyStats = {
+      date,
+      xp: (existingDay?.xp ?? 0) + earnedXp,
+      lessonsCompleted: existingDay?.lessonsCompleted ?? 0,
+      exercisesCompleted: (existingDay?.exercisesCompleted ?? 0) + answers.length,
+      correctAnswers: (existingDay?.correctAnswers ?? 0) + correctAnswers,
+      wrongAnswers: (existingDay?.wrongAnswers ?? 0) + answers.length - correctAnswers,
+    };
+    const masteryUpdates = answers.map((answer, index) => scheduleExerciseMastery({
+      current: existingMastery[index],
+      lessonId: existingMastery[index]?.lessonId ?? lesson.id,
+      unitId: existingMastery[index]?.unitId ?? lesson.unitId,
+      exerciseId: answer.exercise.id,
+      correct: answer.correct,
+    }));
+
+    await db.transaction("rw", db.dailyStats, db.exerciseHistory, db.exerciseMastery, async () => {
+      await db.dailyStats.put(nextDay);
+      await db.exerciseHistory.bulkPut(history);
+      await db.exerciseMastery.bulkPut(masteryUpdates);
     });
 
     const [allProgress, allDailyStats, currentBadges] = await Promise.all([
@@ -311,10 +405,11 @@ export function useVocabiProgress() {
     completeOnboarding,
     updateDailyGoal,
     completeLesson,
+    completeReviewSession,
     getLessonStatus,
     resetData,
     exportData,
     importData,
     refresh,
-  }), [completeLesson, completeOnboarding, exportData, getLessonStatus, importData, refresh, resetData, snapshot, updateDailyGoal]);
+  }), [completeLesson, completeOnboarding, completeReviewSession, exportData, getLessonStatus, importData, refresh, resetData, snapshot, updateDailyGoal]);
 }

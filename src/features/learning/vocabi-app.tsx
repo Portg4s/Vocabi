@@ -13,7 +13,9 @@ import {
   Clock3,
   Flame,
   Layers3,
+  LibraryBig,
   RotateCcw,
+  Search,
   ShieldCheck,
   Sparkles,
   Star,
@@ -32,7 +34,9 @@ import { BadgePill } from "@/components/ui/badge-pill";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { MobileNav } from "@/components/layout/mobile-nav";
-import { getExpectedAnswer, isAnswerCorrect } from "@/features/learning/scoring";
+import { getExpectedAnswer, isAnswerCorrect, todayKey } from "@/features/learning/scoring";
+import { buildLexiconEntries, summarizeLexicon, type LexiconEntry, type LexiconStatus } from "@/features/learning/lexicon";
+import type { ReviewCandidate } from "@/features/learning/review";
 import { useVocabiProgress } from "@/hooks/use-vocabi-progress";
 import { cn } from "@/lib/utils";
 import type { Exercise, Lesson } from "@/types/learning";
@@ -64,6 +68,7 @@ export function VocabiApp() {
   const progress = useVocabiProgress();
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
+  const [activeReviewLesson, setActiveReviewLesson] = useState<Lesson | null>(null);
   const [lessonResult, setLessonResult] = useState<LessonResult | null>(null);
 
   if (progress.loading) {
@@ -93,6 +98,21 @@ export function VocabiApp() {
     );
   }
 
+  if (activeReviewLesson) {
+    return (
+      <LessonSession
+        lesson={activeReviewLesson}
+        onBack={() => setActiveReviewLesson(null)}
+        onComplete={async (answers) => {
+          const result = await progress.completeReviewSession({ lesson: activeReviewLesson, answers });
+          setLessonResult(result);
+          setActiveReviewLesson(null);
+          setActiveTab("home");
+        }}
+      />
+    );
+  }
+
   return (
     <main className="min-h-dvh text-slate-100" style={{ background: "#05070b" }}>
       <div
@@ -107,6 +127,12 @@ export function VocabiApp() {
               lessonResult={lessonResult}
               onDismissResult={() => setLessonResult(null)}
               onStartLesson={(lesson) => setActiveLesson(lesson)}
+              onStartReview={() => {
+                const reviewLesson = createReviewLesson(progress.reviewQueue);
+                if (reviewLesson) {
+                  setActiveReviewLesson(reviewLesson);
+                }
+              }}
             />
           )}
           {activeTab === "lessons" && (
@@ -160,15 +186,15 @@ function Onboarding({ onComplete }: { onComplete: (dailyGoalXp: number) => Promi
         <section className="space-y-6 pt-2">
           <div className="flex items-center gap-3">
             <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-3xl border border-amber-300/25 bg-slate-950 shadow-[0_0_34px_rgba(246,199,86,0.24)]">
-              <Image src={vocabiAppIconImage} alt="" fill sizes="56px" className="object-cover" priority />
+              <Image src={vocabiAppIconImage} alt="" fill sizes="56px" className="object-cover" preload />
             </div>
             <div>
-              <Image src={vocabiWordmarkImage} alt="Vocabi" width={180} height={60} className="h-8 w-auto object-contain object-left mix-blend-screen" priority />
+              <Image src={vocabiWordmarkImage} alt="Vocabi" width={180} height={60} className="h-8 w-auto object-contain object-left mix-blend-screen" preload />
               <h1 className="text-3xl font-black leading-tight">Ta mission anglais commence.</h1>
             </div>
           </div>
           <div className="relative overflow-hidden rounded-[2rem] border border-amber-300/20 bg-slate-950 shadow-[0_26px_70px_rgba(0,0,0,0.45)]">
-            <Image src={vocabiLessonAssetImage} alt="" width={1122} height={1402} className="h-[18rem] w-full object-cover object-[50%_36%] opacity-90" priority />
+            <Image src={vocabiLessonAssetImage} alt="" width={1122} height={1402} className="h-[18rem] w-full object-cover object-[50%_36%] opacity-90" preload />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0)_38%,rgba(5,7,11,0.88)_100%)]" />
             <div className="absolute bottom-4 left-4 right-4">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-300">Mentor Vocabi</p>
@@ -222,11 +248,13 @@ function Dashboard({
   lessonResult,
   onDismissResult,
   onStartLesson,
+  onStartReview,
 }: {
   progress: ReturnType<typeof useVocabiProgress>;
   lessonResult: LessonResult | null;
   onDismissResult: () => void;
   onStartLesson: (lesson: Lesson) => void;
+  onStartReview: () => void;
 }) {
   const nextLesson = allLessons.find((lesson) => progress.getLessonStatus(lesson.id) === "available") ?? getFirstLesson();
   const dailyPercent = progress.profile ? Math.min(100, Math.round((progress.todayXp / progress.profile.dailyGoalXp) * 100)) : 0;
@@ -245,7 +273,7 @@ function Dashboard({
           <Layers3 className="h-5 w-5" />
         </button>
         <div className="flex min-w-0 flex-1 flex-col items-center">
-          <Image src={vocabiWordmarkImage} alt="Vocabi" width={150} height={50} className="h-7 w-auto max-w-[8.5rem] object-contain mix-blend-screen" priority />
+          <Image src={vocabiWordmarkImage} alt="Vocabi" width={150} height={50} className="h-7 w-auto max-w-[8.5rem] object-contain mix-blend-screen" preload />
           <h1 className="mt-1 text-sm font-black uppercase tracking-[0.22em] text-slate-100">Daily Mission</h1>
         </div>
         <VocabiMark />
@@ -254,7 +282,7 @@ function Dashboard({
       {lessonResult && <LessonResultCard result={lessonResult} onDismiss={onDismissResult} />}
 
       <section className="relative overflow-hidden rounded-[2rem] border border-amber-300/20 bg-slate-950 shadow-[0_26px_70px_rgba(0,0,0,0.48)]">
-        <Image src={vocabiDashboardHeroImage} alt="" width={1122} height={1402} className="h-[22rem] w-full object-cover object-[50%_26%] opacity-90" priority />
+        <Image src={vocabiDashboardHeroImage} alt="" width={1122} height={1402} className="h-[22rem] w-full object-cover object-[50%_26%] opacity-90" preload />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.22)_0%,rgba(5,7,11,0.36)_42%,rgba(5,7,11,0.98)_100%)]" />
         <div className="absolute left-5 right-5 top-5 flex items-start justify-between gap-4">
           <div>
@@ -295,6 +323,8 @@ function Dashboard({
           </Button>
         </div>
       </section>
+
+      <ReviewMissionCard progress={progress} onStartReview={onStartReview} />
 
       <section className="space-y-4 rounded-[1.6rem] border border-slate-800 bg-slate-950/80 p-4 shadow-[0_18px_46px_rgba(0,0,0,0.28)] backdrop-blur">
         <div className="flex items-start justify-between gap-3">
@@ -359,6 +389,66 @@ function Dashboard({
   );
 }
 
+function ReviewMissionCard({ progress, onStartReview }: { progress: ReturnType<typeof useVocabiProgress>; onStartReview: () => void }) {
+  const dueCount = progress.reviewSummary.dueCount;
+  const hasDueCards = dueCount > 0 && progress.reviewQueue.length > 0;
+  const nextDue = progress.reviewSummary.nextDueAt ? formatShortDate(progress.reviewSummary.nextDueAt) : "Après ta prochaine leçon";
+
+  return (
+    <section className="relative overflow-hidden rounded-[1.6rem] border border-emerald-300/24 bg-slate-950 p-4 shadow-[0_18px_46px_rgba(0,0,0,0.32)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(52,211,153,0.22),transparent_34%),radial-gradient(circle_at_10%_90%,rgba(246,199,86,0.12),transparent_32%)]" />
+      <div className="relative space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.14em] text-emerald-300">
+              <Brain className="h-4 w-4" />
+              Révision intelligente
+            </p>
+            <h2 className="mt-1 text-2xl font-black text-white">{hasDueCards ? `${dueCount} carte${dueCount > 1 ? "s" : ""} à ancrer` : "Mémoire à jour"}</h2>
+            <p className="mt-1 text-sm font-bold leading-6 text-slate-400">
+              {hasDueCards ? "Priorité aux erreurs, aux cartes faibles et aux mots qui arrivent à échéance." : `Prochaine échéance : ${nextDue}.`}
+            </p>
+          </div>
+          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full border border-emerald-300/35 bg-emerald-300/10">
+            <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-300 text-lg font-black text-slate-950">
+              {progress.reviewSummary.averageMastery}%
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <MiniReviewStat label="À revoir" value={dueCount.toString()} tone="emerald" />
+          <MiniReviewStat label="Fragiles" value={progress.reviewSummary.weakCount.toString()} tone="amber" />
+          <MiniReviewStat label="Ancrées" value={progress.reviewSummary.masteredCount.toString()} tone="sky" />
+        </div>
+        <Button
+          variant={hasDueCards ? "primary" : "secondary"}
+          className={cn("w-full", hasDueCards && "bg-emerald-300 text-slate-950 shadow-[0_7px_0_rgba(6,78,59,0.88)] hover:bg-emerald-200")}
+          disabled={!hasDueCards}
+          onClick={onStartReview}
+        >
+          <RotateCcw className="h-5 w-5" />
+          Lancer la révision
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+function MiniReviewStat({ label, value, tone }: { label: string; value: string; tone: "emerald" | "amber" | "sky" }) {
+  const toneClass = {
+    emerald: "text-emerald-300",
+    amber: "text-amber-300",
+    sky: "text-sky-300",
+  }[tone];
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-3">
+      <p className={cn("text-xl font-black leading-none", toneClass)}>{value}</p>
+      <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-slate-500">{label}</p>
+    </div>
+  );
+}
+
 function Metric({ icon, label, value, tone }: { icon: ReactNode; label: string; value: string; tone: "sun" | "mint" | "sky" }) {
   const toneClass = {
     sun: "bg-amber-300 text-slate-950",
@@ -420,9 +510,43 @@ function LessonResultCard({ result, onDismiss }: { result: LessonResult; onDismi
 }
 
 function LessonsView({ progress, onStartLesson }: { progress: ReturnType<typeof useVocabiProgress>; onStartLesson: (lesson: Lesson) => void }) {
+  const [mode, setMode] = useState<"path" | "lexicon">("path");
+
   return (
     <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-5">
-      <PageTitle eyebrow="Parcours" title="Tes unités" />
+      <PageTitle eyebrow={mode === "path" ? "Parcours" : "Carnet"} title={mode === "path" ? "Tes unités" : "Ton lexique"} />
+      <div className="grid grid-cols-2 gap-2 rounded-[1.3rem] border border-slate-800 bg-slate-950 p-1">
+        <button
+          type="button"
+          onClick={() => setMode("path")}
+          className={cn(
+            "flex h-12 items-center justify-center gap-2 rounded-[1rem] text-sm font-black transition active:scale-95",
+            mode === "path" ? "bg-amber-300 text-slate-950" : "text-slate-500 hover:bg-slate-900 hover:text-slate-200",
+          )}
+        >
+          <Layers3 className="h-4 w-4" />
+          Parcours
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("lexicon")}
+          className={cn(
+            "flex h-12 items-center justify-center gap-2 rounded-[1rem] text-sm font-black transition active:scale-95",
+            mode === "lexicon" ? "bg-emerald-300 text-slate-950" : "text-slate-500 hover:bg-slate-900 hover:text-slate-200",
+          )}
+        >
+          <LibraryBig className="h-4 w-4" />
+          Lexique
+        </button>
+      </div>
+      {mode === "path" ? <LearningPath progress={progress} onStartLesson={onStartLesson} /> : <LexiconView progress={progress} />}
+    </motion.section>
+  );
+}
+
+function LearningPath({ progress, onStartLesson }: { progress: ReturnType<typeof useVocabiProgress>; onStartLesson: (lesson: Lesson) => void }) {
+  return (
+    <>
       <section className="relative overflow-hidden rounded-[1.6rem] border border-amber-300/20 bg-slate-950 shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
         <Image src={vocabiLessonAssetImage} alt="" width={1122} height={1402} className="h-48 w-full object-cover object-[50%_42%] opacity-80" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.96)_0%,rgba(5,7,11,0.72)_46%,rgba(5,7,11,0.16)_100%)]" />
@@ -468,12 +592,153 @@ function LessonsView({ progress, onStartLesson }: { progress: ReturnType<typeof 
           </div>
         </section>
       ))}
-    </motion.section>
+    </>
   );
+}
+
+function LexiconView({ progress }: { progress: ReturnType<typeof useVocabiProgress> }) {
+  const [filter, setFilter] = useState<"all" | LexiconStatus>("all");
+  const [query, setQuery] = useState("");
+  const entries = useMemo(() => buildLexiconEntries({
+    exerciseMastery: progress.exerciseMastery,
+    exerciseHistory: progress.exerciseHistory,
+    getLessonStatus: progress.getLessonStatus,
+  }), [progress.exerciseHistory, progress.exerciseMastery, progress.getLessonStatus]);
+  const summary = useMemo(() => summarizeLexicon(entries), [entries]);
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleEntries = entries.filter((entry) => {
+    const matchesFilter = filter === "all" || entry.status === filter;
+    const haystack = `${entry.prompt} ${entry.expected} ${entry.lessonTitle} ${entry.unitTitle}`.toLowerCase();
+    return matchesFilter && (normalizedQuery.length === 0 || haystack.includes(normalizedQuery));
+  });
+
+  return (
+    <section className="space-y-4">
+      <section className="relative overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-slate-950 p-4 shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
+        <Image src={vocabiStickerPackImage} alt="" width={1254} height={1254} className="absolute -right-24 -top-32 h-80 w-80 object-cover opacity-24" />
+        <div className="relative space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.14em] text-emerald-300">
+                <LibraryBig className="h-4 w-4" />
+                Lexique personnel
+              </p>
+              <h2 className="mt-1 text-3xl font-black text-white">{summary.total} entrées</h2>
+              <p className="mt-1 text-sm font-bold leading-6 text-slate-400">Tes mots, phrases et associations se rangent ici au fil des missions.</p>
+            </div>
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full border border-emerald-300/30 bg-emerald-300/10">
+              <span className="text-lg font-black text-emerald-200">{summary.averageMastery}%</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <MiniReviewStat label="À revoir" value={summary.due.toString()} tone="emerald" />
+            <MiniReviewStat label="Fragiles" value={summary.fragile.toString()} tone="amber" />
+            <MiniReviewStat label="Stables" value={summary.steady.toString()} tone="sky" />
+          </div>
+        </div>
+      </section>
+
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Rechercher un mot, une réponse..."
+          className="h-14 w-full rounded-[1.25rem] border border-slate-800 bg-slate-950 pl-12 pr-4 text-sm font-bold text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-emerald-300 focus:ring-4 focus:ring-emerald-300/15"
+        />
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {lexiconFilters.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setFilter(item.id)}
+            className={cn(
+              "h-10 shrink-0 rounded-full border px-4 text-xs font-black transition active:scale-95",
+              filter === item.id ? "border-emerald-300 bg-emerald-300 text-slate-950" : "border-slate-800 bg-slate-950 text-slate-400",
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        {visibleEntries.length === 0 ? (
+          <Card className="space-y-2 border-slate-800 bg-slate-950 text-slate-100">
+            <h2 className="text-lg font-black">Rien ici pour l&apos;instant.</h2>
+            <p className="text-sm leading-6 text-slate-400">Fais une mission ou ajuste la recherche pour remplir ce carnet.</p>
+          </Card>
+        ) : (
+          visibleEntries.map((entry) => <LexiconCard key={`${entry.lessonId}-${entry.exercise.id}`} entry={entry} />)
+        )}
+      </div>
+    </section>
+  );
+}
+
+const lexiconFilters: Array<{ id: "all" | LexiconStatus; label: string }> = [
+  { id: "all", label: "Tout" },
+  { id: "due", label: "À revoir" },
+  { id: "fragile", label: "Fragiles" },
+  { id: "steady", label: "Stables" },
+  { id: "fresh", label: "Nouveaux" },
+];
+
+function LexiconCard({ entry }: { entry: LexiconEntry }) {
+  const statusMeta = getLexiconStatusMeta(entry.status);
+
+  return (
+    <article className="rounded-[1.35rem] border border-slate-800 bg-slate-950 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.22)]">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={cn("rounded-full px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em]", statusMeta.className)}>
+              {statusMeta.label}
+            </span>
+            <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-slate-500">{entry.direction}</span>
+          </div>
+          <h3 className="mt-3 text-xl font-black leading-tight text-white">{entry.prompt}</h3>
+          <p className="mt-1 text-sm font-bold leading-6 text-emerald-200">{entry.expected}</p>
+        </div>
+        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-slate-900">
+          <span className="text-sm font-black text-slate-100">{entry.masteryLevel}%</span>
+        </div>
+      </div>
+      <div className="mt-4 space-y-2">
+        <ProgressBar value={entry.masteryLevel} className="bg-slate-900" />
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-slate-500">
+          <span>{entry.unitTitle}</span>
+          <span>{entry.lessonTitle}</span>
+          <span>{entry.attempts} essai{entry.attempts > 1 ? "s" : ""}</span>
+          {entry.mistakes > 0 && <span className="text-rose-300">{entry.mistakes} erreur{entry.mistakes > 1 ? "s" : ""}</span>}
+          {entry.dueAt && <span>Échéance {formatShortDate(entry.dueAt)}</span>}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function getLexiconStatusMeta(status: LexiconStatus) {
+  if (status === "due") {
+    return { label: "À revoir", className: "bg-emerald-300 text-slate-950" };
+  }
+
+  if (status === "fragile") {
+    return { label: "Fragile", className: "bg-amber-300 text-slate-950" };
+  }
+
+  if (status === "steady") {
+    return { label: "Stable", className: "bg-sky-300 text-slate-950" };
+  }
+
+  return { label: "Nouveau", className: "bg-slate-800 text-slate-300" };
 }
 
 function StatsView({ progress }: { progress: ReturnType<typeof useVocabiProgress> }) {
   const recentMistakes = useMemo(() => progress.exerciseHistory.filter((item) => !item.correct).slice(-5).reverse(), [progress.exerciseHistory]);
+  const dueReviews = progress.reviewQueue.slice(0, 5);
 
   return (
     <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-5">
@@ -502,6 +767,26 @@ function StatsView({ progress }: { progress: ReturnType<typeof useVocabiProgress
         <StatCard label="Meilleure série" value={`${progress.bestStreak} jour(s)`} />
         <StatCard label="Exercices" value={progress.totalExercises.toString()} />
       </div>
+      <Card className="space-y-4 border-emerald-300/20 bg-slate-950 text-slate-100">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-300">Mémoire</p>
+            <h2 className="mt-1 text-2xl font-black">{progress.reviewSummary.averageMastery}% maîtrisé</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-400">
+              {progress.reviewSummary.dueCount > 0 ? `${progress.reviewSummary.dueCount} carte(s) prête(s) à revoir.` : "Aucune carte due maintenant."}
+            </p>
+          </div>
+          <div className="grid h-14 w-14 place-items-center rounded-3xl bg-emerald-300 text-slate-950">
+            <Brain className="h-7 w-7" />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <MiniReviewStat label="À revoir" value={progress.reviewSummary.dueCount.toString()} tone="emerald" />
+          <MiniReviewStat label="Fragiles" value={progress.reviewSummary.weakCount.toString()} tone="amber" />
+          <MiniReviewStat label="Ancrées" value={progress.reviewSummary.masteredCount.toString()} tone="sky" />
+        </div>
+        <ProgressBar value={progress.reviewSummary.averageMastery} className="bg-slate-900" />
+      </Card>
       <Card className="space-y-3">
         <h2 className="text-lg font-black">Activité récente</h2>
         {progress.dailyStats.length === 0 ? (
@@ -516,7 +801,27 @@ function StatsView({ progress }: { progress: ReturnType<typeof useVocabiProgress
         )}
       </Card>
       <Card className="space-y-3">
-        <h2 className="text-lg font-black">À revoir</h2>
+        <h2 className="text-lg font-black">File de révision</h2>
+        {dueReviews.length === 0 ? (
+          <p className="text-sm leading-6 text-slate-400">
+            Rien à revoir maintenant. Prochaine échéance : {progress.reviewSummary.nextDueAt ? formatShortDate(progress.reviewSummary.nextDueAt) : "après une nouvelle leçon"}.
+          </p>
+        ) : (
+          dueReviews.map((item) => (
+            <div key={item.mastery.exerciseId} className="rounded-2xl border border-emerald-300/16 bg-slate-900 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-black text-slate-100">{item.exercise.prompt}</p>
+                  <p className="text-xs font-bold leading-5 text-slate-400">Échéance : {formatShortDate(item.mastery.dueAt)}</p>
+                </div>
+                <span className="rounded-full bg-emerald-300 px-2.5 py-1 text-xs font-black text-slate-950">{item.mastery.masteryLevel}%</span>
+              </div>
+            </div>
+          ))
+        )}
+      </Card>
+      <Card className="space-y-3">
+        <h2 className="text-lg font-black">Dernières erreurs</h2>
         {recentMistakes.length === 0 ? (
           <p className="text-sm leading-6 text-slate-400">Aucune erreur enregistrée pour l&apos;instant. C&apos;est bon signe.</p>
         ) : (
@@ -972,6 +1277,26 @@ function hasAnswer(answer: string | string[]) {
 
 function formatExpected(answer: string | string[]) {
   return Array.isArray(answer) ? answer.join(" ") : answer;
+}
+
+function createReviewLesson(queue: ReviewCandidate[]): Lesson | null {
+  if (queue.length === 0) {
+    return null;
+  }
+
+  return {
+    id: `review-${todayKey()}`,
+    unitId: "review",
+    title: "Révision intelligente",
+    description: "Une session courte construite depuis tes erreurs et tes échéances de mémoire.",
+    estimatedMinutes: Math.max(2, Math.ceil(queue.length * 0.7)),
+    difficulty: queue.some((item) => item.mastery.unitId.includes("a2")) ? "A2" : "A1",
+    exercises: queue.map((item) => item.exercise),
+  };
+}
+
+function formatShortDate(dateKey: string) {
+  return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(new Date(`${dateKey}T00:00:00.000Z`));
 }
 
 

@@ -40,6 +40,19 @@ Stockage principal: IndexedDB via Dexie.js. `localStorage` peut seulement servir
 - durationMs: number
 - createdAt: string
 
+### exerciseMastery
+- exerciseId: string
+- lessonId: string
+- unitId: string
+- dueAt: string
+- lastReviewedAt: string
+- intervalDays: number
+- easeFactor: number
+- repetitions: number
+- lapses: number
+- masteryLevel: number
+- updatedAt: string
+
 ### dailyStats
 - date: string
 - xp: number
@@ -71,3 +84,10 @@ Stockage principal: IndexedDB via Dexie.js. `localStorage` peut seulement servir
 
 ## Streak
 Le streak est calcule depuis `dailyStats`, puis eventuellement mis en cache. Source de verite: dates d'activite locale.
+
+## Revision espacee
+La table `exerciseMastery` garde une memoire locale par exercice. Chaque reponse met a jour la prochaine echeance:
+- bonne reponse: intervalle plus long, maîtrise en hausse;
+- mauvaise reponse: carte due immediatement, maîtrise en baisse, lapses incrementes.
+
+La file de revision est calculee depuis `dueAt`, les retards, les erreurs repetees et le niveau de maîtrise.
