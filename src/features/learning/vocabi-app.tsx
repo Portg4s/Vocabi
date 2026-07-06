@@ -29,7 +29,7 @@ import type { ChangeEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { badgeDefinitions } from "@/data/badges";
 import { allLessons, getExerciseById, getFirstLesson, units } from "@/data/lessons";
-import { errorShake, feedbackVariants, successPulse } from "@/lib/animations/variants";
+import { errorShake, feedbackVariants, glintSweep, pageVariants, pressable, revealContainer, revealItem, slowHalo, successPulse } from "@/lib/animations/variants";
 import { Button } from "@/components/ui/button";
 import { BadgePill } from "@/components/ui/badge-pill";
 import { Card } from "@/components/ui/card";
@@ -303,6 +303,7 @@ function Dashboard({
   onStartSmartSession: () => void;
   onStartReview: () => void;
 }) {
+  const prefersReducedMotion = useReducedMotion();
   const nextLesson = allLessons.find((lesson) => progress.getLessonStatus(lesson.id) === "available") ?? getFirstLesson();
   const dailyPercent = progress.profile ? Math.min(100, Math.round((progress.todayXp / progress.profile.dailyGoalXp) * 100)) : 0;
   const unlockedBadgeIds = new Set(progress.badges.map((badge) => badge.badgeId));
@@ -314,8 +315,14 @@ function Dashboard({
   const unitPercent = Math.round((unitCompleted / currentUnit.lessons.length) * 100);
 
   return (
-    <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-4 text-slate-100">
-      <header className="flex items-center justify-between gap-4 pt-1">
+    <motion.section
+      variants={prefersReducedMotion ? undefined : pageVariants}
+      initial={prefersReducedMotion ? false : "hidden"}
+      animate="visible"
+      exit={prefersReducedMotion ? undefined : "exit"}
+      className="space-y-4 text-slate-100"
+    >
+      <motion.header variants={prefersReducedMotion ? undefined : revealItem} className="flex items-center justify-between gap-4 pt-1">
         <button type="button" aria-label="Menu" className="grid h-11 w-11 place-items-center rounded-2xl border border-slate-800 bg-slate-950 text-slate-300">
           <Layers3 className="h-5 w-5" />
         </button>
@@ -324,11 +331,28 @@ function Dashboard({
           <h1 className="mt-1 text-sm font-black uppercase tracking-[0.22em] text-slate-100">Daily Mission</h1>
         </div>
         <VocabiMark />
-      </header>
+      </motion.header>
 
       {lessonResult && <LessonResultCard result={lessonResult} onDismiss={onDismissResult} />}
 
-      <section className="relative overflow-hidden rounded-[2rem] border border-amber-300/20 bg-slate-950 shadow-[0_26px_70px_rgba(0,0,0,0.48)]">
+      <motion.section
+        variants={prefersReducedMotion ? undefined : revealItem}
+        className="relative overflow-hidden rounded-[2rem] border border-amber-300/20 bg-slate-950 shadow-[0_26px_70px_rgba(0,0,0,0.48)]"
+      >
+        {!prefersReducedMotion && (
+          <>
+            <motion.div
+              aria-hidden="true"
+              animate={slowHalo}
+              className="pointer-events-none absolute -right-24 top-10 z-10 h-48 w-48 rounded-full bg-amber-300/18 blur-3xl"
+            />
+            <motion.div
+              aria-hidden="true"
+              animate={glintSweep}
+              className="pointer-events-none absolute inset-y-0 z-20 w-24 rotate-12 bg-gradient-to-r from-transparent via-white/12 to-transparent"
+            />
+          </>
+        )}
         <Image src={vocabiDashboardHeroImage} alt="" width={1122} height={1402} className="h-[22rem] w-full object-cover object-[50%_26%] opacity-90" preload />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.22)_0%,rgba(5,7,11,0.36)_42%,rgba(5,7,11,0.98)_100%)]" />
         <div className="absolute left-5 right-5 top-5 flex items-start justify-between gap-4">
@@ -351,11 +375,11 @@ function Dashboard({
         <div className="relative space-y-4 p-5 pt-0" style={{ marginTop: "-5.75rem" }}>
           <p className="max-w-[18rem] text-sm font-bold leading-6 text-slate-300">{nextLesson.description}</p>
 
-          <div className="grid grid-cols-3 gap-2">
-          <Metric icon={<Flame className="h-5 w-5" />} label="Série" value={`${progress.streak}j`} tone="sun" />
-          <Metric icon={<Sparkles className="h-5 w-5" />} label="XP" value={progress.totalXp.toString()} tone="mint" />
-          <Metric icon={<Trophy className="h-5 w-5" />} label="Leçons" value={progress.completedLessons.toString()} tone="sky" />
-          </div>
+          <motion.div variants={prefersReducedMotion ? undefined : revealContainer} initial={prefersReducedMotion ? false : "hidden"} animate="visible" className="grid grid-cols-3 gap-2">
+            <Metric icon={<Flame className="h-5 w-5" />} label="Série" value={`${progress.streak}j`} tone="sun" />
+            <Metric icon={<Sparkles className="h-5 w-5" />} label="XP" value={progress.totalXp.toString()} tone="mint" />
+            <Metric icon={<Trophy className="h-5 w-5" />} label="Leçons" value={progress.completedLessons.toString()} tone="sky" />
+          </motion.div>
 
           <div className="space-y-3 rounded-[1.4rem] border border-slate-800 bg-slate-900/80 p-3 backdrop-blur">
             <div className="flex items-center justify-between text-xs font-black uppercase tracking-[0.12em] text-slate-400">
@@ -369,12 +393,16 @@ function Dashboard({
             <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
-      </section>
+      </motion.section>
 
-      <SmartSessionCard progress={progress} onStartSmartSession={onStartSmartSession} />
-      <ReviewMissionCard progress={progress} onStartReview={onStartReview} />
+      <motion.div variants={prefersReducedMotion ? undefined : revealItem}>
+        <SmartSessionCard progress={progress} onStartSmartSession={onStartSmartSession} />
+      </motion.div>
+      <motion.div variants={prefersReducedMotion ? undefined : revealItem}>
+        <ReviewMissionCard progress={progress} onStartReview={onStartReview} />
+      </motion.div>
 
-      <section className="space-y-4 rounded-[1.6rem] border border-slate-800 bg-slate-950/80 p-4 shadow-[0_18px_46px_rgba(0,0,0,0.28)] backdrop-blur">
+      <motion.section variants={prefersReducedMotion ? undefined : revealItem} className="space-y-4 rounded-[1.6rem] border border-slate-800 bg-slate-950/80 p-4 shadow-[0_18px_46px_rgba(0,0,0,0.28)] backdrop-blur">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.14em] text-amber-300">
@@ -394,14 +422,17 @@ function Dashboard({
             const active = lesson.id === nextLesson.id;
             const done = status === "completed" || status === "mastered";
             return (
-              <button
+              <motion.button
                 key={lesson.id}
                 type="button"
                 disabled={status === "locked"}
                 onClick={() => onStartLesson(lesson)}
+                variants={prefersReducedMotion ? undefined : pressable}
+                initial="rest"
+                whileTap={status === "locked" || prefersReducedMotion ? undefined : "tap"}
                 className={cn(
-                  "relative z-10 flex min-h-16 w-full items-center gap-3 rounded-[1.4rem] px-2 py-2 text-left transition active:scale-[0.99]",
-                  active ? "bg-amber-300/10 shadow-[inset_0_0_0_1px_rgba(246,199,86,0.18)]" : "bg-transparent",
+                  "relative z-10 flex min-h-16 w-full items-center gap-3 rounded-[1.4rem] px-2 py-2 text-left transition",
+                  active ? "bg-amber-300/10 shadow-[inset_0_0_0_1px_rgba(246,199,86,0.18),0_0_24px_rgba(246,199,86,0.08)]" : "bg-transparent",
                   status === "locked" && "opacity-55",
                 )}
               >
@@ -415,14 +446,18 @@ function Dashboard({
                     {lesson.estimatedMinutes} min · {lesson.difficulty}
                   </span>
                 </span>
-                {active && <Zap className="h-5 w-5 text-amber-300" />}
-              </button>
+                {active && (
+                  <motion.span animate={prefersReducedMotion ? undefined : { opacity: [0.65, 1, 0.65], scale: [1, 1.08, 1] }} transition={{ duration: 1.8, repeat: Infinity }}>
+                    <Zap className="h-5 w-5 text-amber-300" />
+                  </motion.span>
+                )}
+              </motion.button>
             );
           })}
         </div>
-      </section>
+      </motion.section>
 
-      <section className="space-y-3">
+      <motion.section variants={prefersReducedMotion ? undefined : revealItem} className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-black">Badges</h2>
           <span className="text-sm font-bold text-slate-400">{progress.badges.length}/{badgeDefinitions.length}</span>
@@ -432,12 +467,13 @@ function Dashboard({
             <BadgePill key={badge.id} badge={badge} unlocked={unlockedBadgeIds.has(badge.id)} />
           ))}
         </div>
-      </section>
+      </motion.section>
     </motion.section>
   );
 }
 
 function SmartSessionCard({ progress, onStartSmartSession }: { progress: ReturnType<typeof useVocabiProgress>; onStartSmartSession: () => void }) {
+  const prefersReducedMotion = useReducedMotion();
   const smartLesson = buildSmartSession({
     reviewQueue: progress.reviewQueue,
     exerciseHistory: progress.exerciseHistory,
@@ -449,6 +485,13 @@ function SmartSessionCard({ progress, onStartSmartSession }: { progress: ReturnT
   return (
     <section className="relative overflow-hidden rounded-[1.6rem] border border-sky-300/24 bg-slate-950 p-4 shadow-[0_18px_46px_rgba(0,0,0,0.32)]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_20%,rgba(125,211,252,0.22),transparent_34%),radial-gradient(circle_at_10%_90%,rgba(246,199,86,0.14),transparent_32%)]" />
+      {!prefersReducedMotion && (
+        <motion.div
+          aria-hidden="true"
+          animate={glintSweep}
+          className="pointer-events-none absolute inset-y-0 w-20 rotate-12 bg-gradient-to-r from-transparent via-sky-100/12 to-transparent"
+        />
+      )}
       <div className="relative space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -480,6 +523,7 @@ function SmartSessionCard({ progress, onStartSmartSession }: { progress: ReturnT
 }
 
 function ReviewMissionCard({ progress, onStartReview }: { progress: ReturnType<typeof useVocabiProgress>; onStartReview: () => void }) {
+  const prefersReducedMotion = useReducedMotion();
   const dueCount = progress.reviewSummary.dueCount;
   const hasDueCards = dueCount > 0 && progress.reviewQueue.length > 0;
   const nextDue = progress.reviewSummary.nextDueAt ? formatShortDate(progress.reviewSummary.nextDueAt) : "Après ta prochaine leçon";
@@ -487,6 +531,13 @@ function ReviewMissionCard({ progress, onStartReview }: { progress: ReturnType<t
   return (
     <section className="relative overflow-hidden rounded-[1.6rem] border border-emerald-300/24 bg-slate-950 p-4 shadow-[0_18px_46px_rgba(0,0,0,0.32)]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(52,211,153,0.22),transparent_34%),radial-gradient(circle_at_10%_90%,rgba(246,199,86,0.12),transparent_32%)]" />
+      {!prefersReducedMotion && (
+        <motion.div
+          aria-hidden="true"
+          animate={slowHalo}
+          className="pointer-events-none absolute -right-16 -top-10 h-36 w-36 rounded-full bg-emerald-300/16 blur-3xl"
+        />
+      )}
       <div className="relative space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -547,11 +598,11 @@ function Metric({ icon, label, value, tone }: { icon: ReactNode; label: string; 
   }[tone];
 
   return (
-    <div className="min-h-[5.5rem] rounded-[1.15rem] border border-slate-800 bg-slate-900/80 p-3 shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur">
+    <motion.div variants={revealItem} className="min-h-[5.5rem] rounded-[1.15rem] border border-slate-800 bg-slate-900/80 p-3 shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur">
       <div className={cn("mb-2 grid h-8 w-8 place-items-center rounded-full", toneClass)}>{icon}</div>
       <p className="text-[1.35rem] font-black leading-none text-white">{value}</p>
       <p className="mt-1 text-[0.72rem] font-bold text-slate-400">{label}</p>
-    </div>
+    </motion.div>
   );
 }
 
@@ -564,6 +615,7 @@ function VocabiMark() {
 }
 
 function LessonResultCard({ result, onDismiss }: { result: LessonResult; onDismiss: () => void }) {
+  const prefersReducedMotion = useReducedMotion();
   const unlockedBadges = result.newBadges
     .map((badge) => badgeDefinitions.find((definition) => definition.id === badge.badgeId))
     .filter((badge): badge is NonNullable<typeof badge> => badge !== undefined);
@@ -574,9 +626,20 @@ function LessonResultCard({ result, onDismiss }: { result: LessonResult; onDismi
       : "Progression enregistrée. Les erreurs reviendront en révision.";
 
   return (
-    <motion.div initial={{ opacity: 0, y: -12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}>
+    <motion.div
+      initial={prefersReducedMotion ? false : { opacity: 0, y: -12, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+    >
       <Card className="space-y-4 overflow-hidden border-amber-300/35 bg-slate-950 p-0 text-slate-100 shadow-[0_24px_60px_rgba(0,0,0,0.42)]">
         <div className="relative min-h-44 p-5">
+          {!prefersReducedMotion && (
+            <motion.div
+              aria-hidden="true"
+              animate={glintSweep}
+              className="pointer-events-none absolute inset-y-0 z-20 w-20 rotate-12 bg-gradient-to-r from-transparent via-amber-100/18 to-transparent"
+            />
+          )}
           <Image src={vocabiLessonCompleteBadgeImage} alt="" fill sizes="384px" className="object-cover object-center opacity-85" />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.96)_0%,rgba(5,7,11,0.72)_46%,rgba(5,7,11,0.18)_100%)]" />
           <div className="relative max-w-[13rem]">
@@ -602,8 +665,16 @@ function LessonResultCard({ result, onDismiss }: { result: LessonResult; onDismi
           {unlockedBadges.length > 0 && (
             <div className="space-y-2 rounded-[1.2rem] border border-amber-300/28 bg-amber-300/10 p-3">
               <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-200">Nouveau badge</p>
-              {unlockedBadges.map((badge) => (
-                <p key={badge.id} className="text-sm font-black text-amber-50">{badge.title}</p>
+              {unlockedBadges.map((badge, badgeIndex) => (
+                <motion.p
+                  key={badge.id}
+                  initial={prefersReducedMotion ? false : { opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: badgeIndex * 0.06 }}
+                  className="text-sm font-black text-amber-50"
+                >
+                  {badge.title}
+                </motion.p>
               ))}
             </div>
           )}
@@ -1355,7 +1426,14 @@ function LessonSession({
               transition={{ duration: 0.28 }}
               className="space-y-4"
             >
-              <Card className="space-y-4 overflow-hidden border-amber-300/18 bg-slate-950 p-0 text-slate-100 shadow-[0_24px_58px_rgba(0,0,0,0.35)]">
+              <Card className="relative space-y-4 overflow-hidden border-amber-300/18 bg-slate-950 p-0 text-slate-100 shadow-[0_24px_58px_rgba(0,0,0,0.35)]">
+                {!prefersReducedMotion && (
+                  <motion.div
+                    aria-hidden="true"
+                    animate={glintSweep}
+                    className="pointer-events-none absolute inset-y-0 z-20 w-20 rotate-12 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                  />
+                )}
                 <div className="relative h-28">
                   <Image src={vocabiBackgroundPackImage} alt="" fill sizes="384px" className="object-cover object-[50%_75%] opacity-50" />
                   <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.05)_0%,rgba(15,23,42,0.96)_100%)]" />
@@ -1470,18 +1548,21 @@ function ExerciseInput({
     return (
       <div className="grid gap-3">
         {exercise.options.map((option) => (
-          <button
+          <motion.button
             key={option}
             type="button"
             disabled={disabled}
             onClick={() => onChange(option)}
+            whileTap={disabled ? undefined : { scale: 0.985, y: 1 }}
             className={cn(
-              "min-h-14 rounded-2xl border px-4 text-left text-base font-extrabold shadow-sm transition active:scale-[0.99]",
-              answer === option ? "border-amber-300 bg-amber-300 text-slate-950" : "border-slate-800 bg-slate-950 text-slate-100",
+              "min-h-14 rounded-2xl border px-4 text-left text-base font-extrabold shadow-sm transition",
+              answer === option
+                ? "border-amber-300 bg-amber-300 text-slate-950 shadow-[0_0_28px_rgba(246,199,86,0.16)]"
+                : "border-slate-800 bg-slate-950 text-slate-100",
             )}
           >
             {option}
-          </button>
+          </motion.button>
         ))}
       </div>
     );
@@ -1494,17 +1575,17 @@ function ExerciseInput({
         <div className="min-h-16 rounded-3xl border border-dashed border-amber-300/50 bg-slate-950 p-3">
           <div className="flex flex-wrap gap-2">
             {selected.length === 0 ? <span className="text-sm font-bold text-slate-500">Tape les mots dans l&apos;ordre</span> : selected.map((token, tokenIndex) => (
-              <button key={`${token}-${tokenIndex}`} type="button" disabled={disabled} onClick={() => onChange(selected.filter((_, itemIndex) => itemIndex !== tokenIndex))} className="rounded-xl bg-amber-300 px-3 py-2 text-sm font-extrabold text-slate-950">
+              <motion.button key={`${token}-${tokenIndex}`} type="button" disabled={disabled} onClick={() => onChange(selected.filter((_, itemIndex) => itemIndex !== tokenIndex))} whileTap={disabled ? undefined : { scale: 0.94 }} className="rounded-xl bg-amber-300 px-3 py-2 text-sm font-extrabold text-slate-950 shadow-[0_0_18px_rgba(246,199,86,0.18)]">
                 {token}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {exercise.tokens.map((token, tokenIndex) => (
-            <button key={`${token}-${tokenIndex}`} type="button" disabled={disabled} onClick={() => onChange([...selected, token])} className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-extrabold text-slate-100 shadow-sm">
+            <motion.button key={`${token}-${tokenIndex}`} type="button" disabled={disabled} onClick={() => onChange([...selected, token])} whileTap={disabled ? undefined : { scale: 0.95, y: 1 }} className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-extrabold text-slate-100 shadow-sm">
               {token}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
@@ -1519,17 +1600,21 @@ function ExerciseInput({
           const value = `${pair.left}:${pair.right}`;
           const active = selected.includes(value);
           return (
-            <button
+            <motion.button
               key={value}
               type="button"
               disabled={disabled}
               onClick={() => onChange(active ? selected.filter((item) => item !== value) : [...selected, value])}
-              className={cn("flex w-full items-center justify-between rounded-2xl border p-4 text-left font-extrabold shadow-sm", active ? "border-amber-300 bg-amber-300 text-slate-950" : "border-slate-800 bg-slate-950 text-slate-100")}
+              whileTap={disabled ? undefined : { scale: 0.985, y: 1 }}
+              className={cn(
+                "flex w-full items-center justify-between rounded-2xl border p-4 text-left font-extrabold shadow-sm transition",
+                active ? "border-amber-300 bg-amber-300 text-slate-950 shadow-[0_0_28px_rgba(246,199,86,0.16)]" : "border-slate-800 bg-slate-950 text-slate-100",
+              )}
             >
               <span>{pair.left}</span>
               <span className="text-slate-400">=</span>
               <span>{pair.right}</span>
-            </button>
+            </motion.button>
           );
         })}
       </div>

@@ -23,12 +23,13 @@ export function MobileNav({ activeTab, onChange }: { activeTab: Tab; onChange: (
               type="button"
               onClick={() => onChange(item.id)}
               className={cn(
-                "flex min-h-0 flex-col items-center justify-center gap-0.5 rounded-[1.05rem] text-[0.68rem] font-extrabold leading-none transition active:scale-95",
+                "relative flex min-h-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[1.05rem] text-[0.68rem] font-extrabold leading-none transition active:scale-95",
                 active
                   ? "bg-slate-900 text-amber-300 shadow-[inset_0_0_0_1px_rgba(246,199,86,0.28),0_0_18px_rgba(246,199,86,0.12)]"
                   : "text-slate-500 hover:bg-slate-900 hover:text-slate-200",
               )}
             >
+              {active && <span className="pointer-events-none absolute inset-x-5 top-1 h-px bg-amber-200/70 shadow-[0_0_14px_rgba(246,199,86,0.72)]" />}
               <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
               {item.label}
             </button>

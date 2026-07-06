@@ -47,6 +47,32 @@ button {
   color: #064e3b;
 }
 
+.vocabi-progress-fill {
+  position: relative;
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.28), 0 0 28px rgba(246, 199, 86, 0.16);
+}
+
+.vocabi-progress-fill::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+  transform: translateX(-120%);
+  animation: vocabi-progress-glint 3.8s ease-in-out infinite;
+}
+
+@keyframes vocabi-progress-glint {
+  0%,
+  52% {
+    transform: translateX(-120%);
+  }
+
+  78%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
