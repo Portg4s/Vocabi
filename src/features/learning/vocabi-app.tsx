@@ -39,6 +39,7 @@ import { getExpectedAnswer, isAnswerCorrect, todayKey } from "@/features/learnin
 import { buildLexiconEntries, summarizeLexicon, type LexiconEntry, type LexiconStatus } from "@/features/learning/lexicon";
 import type { ReviewCandidate } from "@/features/learning/review";
 import { getExerciseSpeechTarget, speakEnglish, type AudioSettings } from "@/features/learning/speech";
+import { buildMistakeSession, buildSmartSession } from "@/features/learning/smart-session";
 import { useVocabiProgress } from "@/hooks/use-vocabi-progress";
 import { cn } from "@/lib/utils";
 import type { Exercise, Lesson } from "@/types/learning";
@@ -71,6 +72,7 @@ export function VocabiApp() {
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [activeReviewLesson, setActiveReviewLesson] = useState<Lesson | null>(null);
+  const [activePracticeLesson, setActivePracticeLesson] = useState<Lesson | null>(null);
   const [lessonResult, setLessonResult] = useState<LessonResult | null>(null);
 
   if (progress.loading) {
@@ -117,6 +119,22 @@ export function VocabiApp() {
     );
   }
 
+  if (activePracticeLesson) {
+    return (
+      <LessonSession
+        lesson={activePracticeLesson}
+        audioSettings={progress.audioSettings}
+        onBack={() => setActivePracticeLesson(null)}
+        onComplete={async (answers) => {
+          const result = await progress.completeReviewSession({ lesson: activePracticeLesson, answers });
+          setLessonResult(result);
+          setActivePracticeLesson(null);
+          setActiveTab("home");
+        }}
+      />
+    );
+  }
+
   return (
     <main className="min-h-dvh text-slate-100" style={{ background: "#05070b" }}>
       <div
@@ -131,6 +149,17 @@ export function VocabiApp() {
               lessonResult={lessonResult}
               onDismissResult={() => setLessonResult(null)}
               onStartLesson={(lesson) => setActiveLesson(lesson)}
+              onStartSmartSession={() => {
+                const smartLesson = buildSmartSession({
+                  reviewQueue: progress.reviewQueue,
+                  exerciseHistory: progress.exerciseHistory,
+                  getLessonStatus: progress.getLessonStatus,
+                });
+
+                if (smartLesson) {
+                  setActivePracticeLesson(smartLesson);
+                }
+              }}
               onStartReview={() => {
                 const reviewLesson = createReviewLesson(progress.reviewQueue);
                 if (reviewLesson) {
@@ -142,7 +171,19 @@ export function VocabiApp() {
           {activeTab === "lessons" && (
             <LessonsView key="lessons" progress={progress} onStartLesson={(lesson) => setActiveLesson(lesson)} />
           )}
-          {activeTab === "stats" && <StatsView key="stats" progress={progress} />}
+          {activeTab === "stats" && (
+            <StatsView
+              key="stats"
+              progress={progress}
+              onStartMistakes={() => {
+                const mistakeLesson = buildMistakeSession(progress.exerciseHistory);
+
+                if (mistakeLesson) {
+                  setActivePracticeLesson(mistakeLesson);
+                }
+              }}
+            />
+          )}
           {activeTab === "profile" && <ProfileView key="profile" progress={progress} />}
         </AnimatePresence>
       </div>
@@ -252,12 +293,14 @@ function Dashboard({
   lessonResult,
   onDismissResult,
   onStartLesson,
+  onStartSmartSession,
   onStartReview,
 }: {
   progress: ReturnType<typeof useVocabiProgress>;
   lessonResult: LessonResult | null;
   onDismissResult: () => void;
   onStartLesson: (lesson: Lesson) => void;
+  onStartSmartSession: () => void;
   onStartReview: () => void;
 }) {
   const nextLesson = allLessons.find((lesson) => progress.getLessonStatus(lesson.id) === "available") ?? getFirstLesson();
@@ -328,6 +371,7 @@ function Dashboard({
         </div>
       </section>
 
+      <SmartSessionCard progress={progress} onStartSmartSession={onStartSmartSession} />
       <ReviewMissionCard progress={progress} onStartReview={onStartReview} />
 
       <section className="space-y-4 rounded-[1.6rem] border border-slate-800 bg-slate-950/80 p-4 shadow-[0_18px_46px_rgba(0,0,0,0.28)] backdrop-blur">
@@ -390,6 +434,48 @@ function Dashboard({
         </div>
       </section>
     </motion.section>
+  );
+}
+
+function SmartSessionCard({ progress, onStartSmartSession }: { progress: ReturnType<typeof useVocabiProgress>; onStartSmartSession: () => void }) {
+  const smartLesson = buildSmartSession({
+    reviewQueue: progress.reviewQueue,
+    exerciseHistory: progress.exerciseHistory,
+    getLessonStatus: progress.getLessonStatus,
+  });
+  const reviewCount = progress.reviewQueue.length;
+  const mistakeCount = progress.exerciseHistory.filter((item) => !item.correct).length;
+
+  return (
+    <section className="relative overflow-hidden rounded-[1.6rem] border border-sky-300/24 bg-slate-950 p-4 shadow-[0_18px_46px_rgba(0,0,0,0.32)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_20%,rgba(125,211,252,0.22),transparent_34%),radial-gradient(circle_at_10%_90%,rgba(246,199,86,0.14),transparent_32%)]" />
+      <div className="relative space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.14em] text-sky-300">
+              <Zap className="h-4 w-4" />
+              Session intelligente
+            </p>
+            <h2 className="mt-1 text-2xl font-black text-white">5 minutes utiles</h2>
+            <p className="mt-1 text-sm font-bold leading-6 text-slate-400">
+              Nouveau contenu, révision due et erreurs récentes dans une seule boucle courte.
+            </p>
+          </div>
+          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full border border-sky-300/35 bg-sky-300/10">
+            <span className="text-lg font-black text-sky-200">{smartLesson?.exercises.length ?? 0}</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <MiniReviewStat label="Révisions" value={reviewCount.toString()} tone="emerald" />
+          <MiniReviewStat label="Erreurs" value={mistakeCount.toString()} tone="amber" />
+          <MiniReviewStat label="Durée" value={`${smartLesson?.estimatedMinutes ?? 0}m`} tone="sky" />
+        </div>
+        <Button variant="secondary" className="w-full border-sky-300/25" disabled={!smartLesson} onClick={onStartSmartSession}>
+          <Zap className="h-5 w-5" />
+          Lancer une session 5 min
+        </Button>
+      </div>
+    </section>
   );
 }
 
@@ -478,6 +564,15 @@ function VocabiMark() {
 }
 
 function LessonResultCard({ result, onDismiss }: { result: LessonResult; onDismiss: () => void }) {
+  const unlockedBadges = result.newBadges
+    .map((badge) => badgeDefinitions.find((definition) => definition.id === badge.badgeId))
+    .filter((badge): badge is NonNullable<typeof badge> => badge !== undefined);
+  const resultMessage = result.score === 100
+    ? "Parfait. Cette mission est maîtrisée."
+    : result.score >= 80
+      ? "Solide. La mémoire commence à bien accrocher."
+      : "Progression enregistrée. Les erreurs reviendront en révision.";
+
   return (
     <motion.div initial={{ opacity: 0, y: -12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}>
       <Card className="space-y-4 overflow-hidden border-amber-300/35 bg-slate-950 p-0 text-slate-100 shadow-[0_24px_60px_rgba(0,0,0,0.42)]">
@@ -494,18 +589,25 @@ function LessonResultCard({ result, onDismiss }: { result: LessonResult; onDismi
           </div>
         </div>
         <div className="space-y-4 p-5 pt-0">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.14em] text-amber-300">Récompense active</p>
-            <p className="mt-1 text-sm font-bold text-slate-400">Ta maîtrise progresse.</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.14em] text-amber-300">Récompense active</p>
+              <p className="mt-1 text-sm font-bold leading-6 text-slate-400">{resultMessage}</p>
+            </div>
+            <div className="grid h-14 w-14 place-items-center rounded-3xl bg-amber-300 text-amber-950">
+              <Trophy className="h-7 w-7" />
+            </div>
           </div>
-          <div className="grid h-14 w-14 place-items-center rounded-3xl bg-amber-300 text-amber-950">
-            <Trophy className="h-7 w-7" />
-          </div>
-        </div>
-        <ProgressBar value={result.score} className="bg-white/10" />
-        {result.newBadges.length > 0 && <p className="text-sm font-bold text-amber-900">Nouveau badge débloqué !</p>}
-        <Button variant="secondary" className="w-full" onClick={onDismiss}>Continuer</Button>
+          <ProgressBar value={result.score} className="bg-white/10" />
+          {unlockedBadges.length > 0 && (
+            <div className="space-y-2 rounded-[1.2rem] border border-amber-300/28 bg-amber-300/10 p-3">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-200">Nouveau badge</p>
+              {unlockedBadges.map((badge) => (
+                <p key={badge.id} className="text-sm font-black text-amber-50">{badge.title}</p>
+              ))}
+            </div>
+          )}
+          <Button variant="secondary" className="w-full" onClick={onDismiss}>Continuer</Button>
         </div>
       </Card>
     </motion.div>
@@ -785,7 +887,7 @@ function SpeechButton({
   );
 }
 
-function StatsView({ progress }: { progress: ReturnType<typeof useVocabiProgress> }) {
+function StatsView({ progress, onStartMistakes }: { progress: ReturnType<typeof useVocabiProgress>; onStartMistakes: () => void }) {
   const recentMistakes = useMemo(() => progress.exerciseHistory.filter((item) => !item.correct).slice(-5).reverse(), [progress.exerciseHistory]);
   const dueReviews = progress.reviewQueue.slice(0, 5);
 
@@ -870,7 +972,17 @@ function StatsView({ progress }: { progress: ReturnType<typeof useVocabiProgress
         )}
       </Card>
       <Card className="space-y-3">
-        <h2 className="text-lg font-black">Dernières erreurs</h2>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-black">Dernières erreurs</h2>
+            <p className="text-sm leading-6 text-slate-400">Transforme tes accrocs récents en mini-session ciblée.</p>
+          </div>
+          {recentMistakes.length > 0 && (
+            <Button size="sm" variant="danger" onClick={onStartMistakes}>
+              Rejouer
+            </Button>
+          )}
+        </div>
         {recentMistakes.length === 0 ? (
           <p className="text-sm leading-6 text-slate-400">Aucune erreur enregistrée pour l&apos;instant. C&apos;est bon signe.</p>
         ) : (
@@ -912,7 +1024,15 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
     try {
       setBusy(true);
       const raw = await file.text();
-      await progress.importData(JSON.parse(raw));
+      let parsed: unknown;
+
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        throw new Error("Ce fichier n'est pas un JSON valide.");
+      }
+
+      await progress.importData(parsed);
       setBackupMessage("Sauvegarde importée. Tes données locales ont été remplacées.");
     } catch (error) {
       setBackupMessage(error instanceof Error ? error.message : "Impossible d'importer cette sauvegarde.");
@@ -937,10 +1057,15 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
               type="button"
               disabled={busy}
               onClick={async () => {
-                setBusy(true);
-                await progress.updateDailyGoal(goal);
-                setGoalMessage(`Objectif mis à jour : ${goal} XP par jour.`);
-                setBusy(false);
+                try {
+                  setBusy(true);
+                  await progress.updateDailyGoal(goal);
+                  setGoalMessage(`Objectif mis à jour : ${goal} XP par jour.`);
+                } catch (error) {
+                  setGoalMessage(error instanceof Error ? error.message : "Impossible de mettre à jour l'objectif.");
+                } finally {
+                  setBusy(false);
+                }
               }}
               className={cn(
                 "rounded-2xl border p-3 text-center text-sm font-black transition active:scale-95",
@@ -969,9 +1094,14 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
           checked={progress.audioSettings.autoSpeak}
           disabled={busy}
           onChange={async (checked) => {
-            setBusy(true);
-            await progress.updateAudioSettings({ ...progress.audioSettings, autoSpeak: checked });
-            setBusy(false);
+            try {
+              setBusy(true);
+              await progress.updateAudioSettings({ ...progress.audioSettings, autoSpeak: checked });
+            } catch (error) {
+              setBackupMessage(error instanceof Error ? error.message : "Impossible de mettre à jour l'audio.");
+            } finally {
+              setBusy(false);
+            }
           }}
         />
         <AudioToggle
@@ -980,9 +1110,14 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
           checked={progress.audioSettings.slowMode}
           disabled={busy}
           onChange={async (checked) => {
-            setBusy(true);
-            await progress.updateAudioSettings({ ...progress.audioSettings, slowMode: checked });
-            setBusy(false);
+            try {
+              setBusy(true);
+              await progress.updateAudioSettings({ ...progress.audioSettings, slowMode: checked });
+            } catch (error) {
+              setBackupMessage(error instanceof Error ? error.message : "Impossible de mettre à jour l'audio.");
+            } finally {
+              setBusy(false);
+            }
           }}
         />
       </Card>
@@ -1001,14 +1136,22 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
           className="w-full"
           disabled={busy}
           onClick={async () => {
-            const data = await progress.exportData();
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const anchor = document.createElement("a");
-            anchor.href = url;
-            anchor.download = `vocabi-backup-${new Date().toISOString().slice(0, 10)}.json`;
-            anchor.click();
-            URL.revokeObjectURL(url);
+            try {
+              setBusy(true);
+              const data = await progress.exportData();
+              const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const anchor = document.createElement("a");
+              anchor.href = url;
+              anchor.download = `vocabi-backup-${new Date().toISOString().slice(0, 10)}.json`;
+              anchor.click();
+              URL.revokeObjectURL(url);
+              setBackupMessage("Sauvegarde exportée.");
+            } catch (error) {
+              setBackupMessage(error instanceof Error ? error.message : "Impossible d'exporter la sauvegarde.");
+            } finally {
+              setBusy(false);
+            }
           }}
         >
           Exporter une sauvegarde
@@ -1029,9 +1172,15 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
           disabled={busy}
           onClick={async () => {
             if (!window.confirm("Réinitialiser toute la progression locale Vocabi ?")) return;
-            setBusy(true);
-            await progress.resetData();
-            setBusy(false);
+            try {
+              setBusy(true);
+              await progress.resetData();
+              setBackupMessage("Progression locale réinitialisée.");
+            } catch (error) {
+              setBackupMessage(error instanceof Error ? error.message : "Impossible de réinitialiser les données locales.");
+            } finally {
+              setBusy(false);
+            }
           }}
         >
           <RotateCcw className="h-5 w-5" />

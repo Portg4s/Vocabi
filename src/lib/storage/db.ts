@@ -104,7 +104,7 @@ export async function exportVocabiData() {
   };
 }
 
-type VocabiBackup = Awaited<ReturnType<typeof exportVocabiData>>;
+export type VocabiBackup = Awaited<ReturnType<typeof exportVocabiData>>;
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -112,22 +112,20 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 function readArray<T>(backup: Record<string, unknown>, key: keyof VocabiBackup): T[] {
   const value = backup[key];
-  return Array.isArray(value) ? (value as T[]) : [];
+
+  if (value === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`Sauvegarde Vocabi corrompue : champ ${String(key)} invalide.`);
+  }
+
+  return value as T[];
 }
 
 export async function importVocabiData(data: unknown) {
-  if (!isObject(data) || data.version !== 1) {
-    throw new Error("Sauvegarde Vocabi invalide ou version non supportée.");
-  }
-
-  const userProfile = readArray<UserProfile>(data, "userProfile");
-  const lessonProgress = readArray<LessonProgress>(data, "lessonProgress");
-  const exerciseHistory = readArray<ExerciseHistory>(data, "exerciseHistory");
-  const exerciseMastery = readArray<ExerciseMastery>(data, "exerciseMastery");
-  const dailyStats = readArray<DailyStats>(data, "dailyStats");
-  const badges = readArray<BadgeUnlock>(data, "badges");
-  const settings = readArray<SettingEntry>(data, "settings");
-  const meta = readArray<MetaEntry>(data, "meta");
+  const backup = parseVocabiBackup(data);
 
   await db.transaction("rw", [db.userProfile, db.lessonProgress, db.exerciseHistory, db.exerciseMastery, db.dailyStats, db.badges, db.settings, db.meta], async () => {
     await Promise.all([
@@ -141,15 +139,47 @@ export async function importVocabiData(data: unknown) {
       db.meta.clear(),
     ]);
 
-    await db.userProfile.bulkPut(userProfile.length > 0 ? userProfile : [{ ...defaultProfile, createdAt: new Date().toISOString() }]);
-    await db.lessonProgress.bulkPut(lessonProgress);
-    await db.exerciseHistory.bulkPut(exerciseHistory);
-    await db.exerciseMastery.bulkPut(exerciseMastery);
-    await db.dailyStats.bulkPut(dailyStats);
-    await db.badges.bulkPut(badges);
-    await db.settings.bulkPut(settings);
-    await db.meta.bulkPut(meta);
+    await db.userProfile.bulkPut(backup.userProfile.length > 0 ? backup.userProfile : [{ ...defaultProfile, createdAt: new Date().toISOString() }]);
+    await db.lessonProgress.bulkPut(backup.lessonProgress);
+    await db.exerciseHistory.bulkPut(backup.exerciseHistory);
+    await db.exerciseMastery.bulkPut(backup.exerciseMastery);
+    await db.dailyStats.bulkPut(backup.dailyStats);
+    await db.badges.bulkPut(backup.badges);
+    await db.settings.bulkPut(backup.settings);
+    await db.meta.bulkPut(backup.meta);
   });
+}
+
+export function parseVocabiBackup(data: unknown): VocabiBackup {
+  if (!isObject(data) || data.version !== 1) {
+    throw new Error("Sauvegarde Vocabi invalide ou version non supportée.");
+  }
+
+  if (typeof data.exportedAt !== "string") {
+    throw new Error("Sauvegarde Vocabi incomplète : date d'export manquante.");
+  }
+
+  const userProfile = readArray<UserProfile>(data, "userProfile");
+  const lessonProgress = readArray<LessonProgress>(data, "lessonProgress");
+  const exerciseHistory = readArray<ExerciseHistory>(data, "exerciseHistory");
+  const exerciseMastery = readArray<ExerciseMastery>(data, "exerciseMastery");
+  const dailyStats = readArray<DailyStats>(data, "dailyStats");
+  const badges = readArray<BadgeUnlock>(data, "badges");
+  const settings = readArray<SettingEntry>(data, "settings");
+  const meta = readArray<MetaEntry>(data, "meta");
+
+  return {
+    version: 1,
+    exportedAt: data.exportedAt,
+    userProfile,
+    lessonProgress,
+    exerciseHistory,
+    exerciseMastery,
+    dailyStats,
+    badges,
+    settings,
+    meta,
+  };
 }
 
 export async function resetVocabiData() {
