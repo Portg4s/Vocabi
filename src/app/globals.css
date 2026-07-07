@@ -78,6 +78,48 @@ body {
     linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.96));
 }
 
+.vocabi-etched {
+  position: relative;
+  isolation: isolate;
+}
+
+.vocabi-etched::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(115deg, transparent 0 44%, rgba(246, 199, 86, 0.075) 44.4% 45%, transparent 45.4% 100%),
+    linear-gradient(24deg, transparent 0 56%, rgba(125, 211, 252, 0.055) 56.4% 57%, transparent 57.4% 100%);
+  opacity: 0.8;
+}
+
+.vocabi-segmented {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.96)),
+    #020617;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+.vocabi-badge-reveal {
+  position: relative;
+  overflow: hidden;
+}
+
+.vocabi-badge-reveal::after {
+  position: absolute;
+  inset: -40% auto -40% -30%;
+  width: 34%;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: rotate(15deg) translateX(-120%);
+  animation: vocabi-badge-sheen 5.6s ease-in-out infinite;
+}
+
 button,
 input,
 textarea,
@@ -118,6 +160,18 @@ button {
   78%,
   100% {
     transform: translateX(120%);
+  }
+}
+
+@keyframes vocabi-badge-sheen {
+  0%,
+  62% {
+    transform: rotate(15deg) translateX(-120%);
+  }
+
+  84%,
+  100% {
+    transform: rotate(15deg) translateX(430%);
   }
 }
 

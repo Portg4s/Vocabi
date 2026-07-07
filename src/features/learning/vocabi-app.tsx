@@ -615,7 +615,7 @@ function LessonResultCard({ result, onDismiss }: { result: LessonResult; onDismi
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Card className="space-y-4 overflow-hidden border-amber-300/35 bg-slate-950 p-0 text-slate-100 shadow-[0_24px_60px_rgba(0,0,0,0.42)]">
+      <Card className="vocabi-panel space-y-4 overflow-hidden border-amber-300/35 p-0 text-slate-100">
         <div className="relative min-h-44 p-5">
           {!prefersReducedMotion && (
             <motion.div
@@ -641,13 +641,13 @@ function LessonResultCard({ result, onDismiss }: { result: LessonResult; onDismi
               <p className="text-sm font-black uppercase tracking-[0.14em] text-amber-300">Récompense active</p>
               <p className="mt-1 text-sm font-bold leading-6 text-slate-400">{resultMessage}</p>
             </div>
-            <div className="grid h-14 w-14 place-items-center rounded-3xl bg-amber-300 text-amber-950">
+            <div className="grid h-14 w-14 place-items-center rounded-3xl bg-amber-300 text-amber-950 shadow-[0_12px_24px_rgba(246,199,86,0.18)]">
               <Trophy className="h-7 w-7" />
             </div>
           </div>
           <ProgressBar value={result.score} className="bg-white/10" />
           {unlockedBadges.length > 0 && (
-            <div className="space-y-2 rounded-[1.2rem] border border-amber-300/28 bg-amber-300/10 p-3">
+            <div className="vocabi-badge-reveal space-y-2 rounded-[1.2rem] border border-amber-300/28 bg-amber-300/10 p-3">
               <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-200">Nouveau badge</p>
               {unlockedBadges.map((badge, badgeIndex) => (
                 <motion.p
@@ -675,13 +675,13 @@ function LessonsView({ progress, onStartLesson }: { progress: ReturnType<typeof 
   return (
     <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="space-y-5">
       <PageTitle eyebrow={mode === "path" ? "Parcours" : "Carnet"} title={mode === "path" ? "Tes unités" : "Ton lexique"} />
-      <div className="grid grid-cols-2 gap-2 rounded-[1.3rem] border border-slate-800 bg-slate-950 p-1">
+      <div className="vocabi-segmented grid grid-cols-2 gap-2 rounded-[1.3rem] border border-white/10 p-1">
         <button
           type="button"
           onClick={() => setMode("path")}
           className={cn(
             "flex h-12 items-center justify-center gap-2 rounded-[1rem] text-sm font-black transition active:scale-95",
-            mode === "path" ? "bg-amber-300 text-slate-950" : "text-slate-500 hover:bg-slate-900 hover:text-slate-200",
+            mode === "path" ? "bg-amber-300 text-slate-950 shadow-[0_6px_16px_rgba(246,199,86,0.14)]" : "text-slate-500 hover:bg-slate-900 hover:text-slate-200",
           )}
         >
           <Layers3 className="h-4 w-4" />
@@ -692,7 +692,7 @@ function LessonsView({ progress, onStartLesson }: { progress: ReturnType<typeof 
           onClick={() => setMode("lexicon")}
           className={cn(
             "flex h-12 items-center justify-center gap-2 rounded-[1rem] text-sm font-black transition active:scale-95",
-            mode === "lexicon" ? "bg-emerald-300 text-slate-950" : "text-slate-500 hover:bg-slate-900 hover:text-slate-200",
+            mode === "lexicon" ? "bg-emerald-300 text-slate-950 shadow-[0_6px_16px_rgba(52,211,153,0.14)]" : "text-slate-500 hover:bg-slate-900 hover:text-slate-200",
           )}
         >
           <LibraryBig className="h-4 w-4" />
@@ -707,7 +707,7 @@ function LessonsView({ progress, onStartLesson }: { progress: ReturnType<typeof 
 function LearningPath({ progress, onStartLesson }: { progress: ReturnType<typeof useVocabiProgress>; onStartLesson: (lesson: Lesson) => void }) {
   return (
     <>
-      <section className="relative overflow-hidden rounded-[1.6rem] border border-amber-300/20 bg-slate-950 shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
+      <section className="vocabi-panel vocabi-etched rounded-[1.6rem] border border-amber-300/20">
         <Image src={vocabiLessonAssetImage} alt="" width={1122} height={1402} className="h-48 w-full object-cover object-[50%_42%] opacity-80" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.96)_0%,rgba(5,7,11,0.72)_46%,rgba(5,7,11,0.16)_100%)]" />
         <div className="absolute inset-0 flex items-end p-4">
@@ -734,8 +734,8 @@ function LearningPath({ progress, onStartLesson }: { progress: ReturnType<typeof
                   disabled={locked}
                   onClick={() => onStartLesson(lesson)}
                   className={cn(
-                    "flex w-full items-center gap-4 rounded-[1.25rem] border bg-slate-950 p-4 text-left shadow-[0_12px_30px_rgba(0,0,0,0.24)] transition active:scale-[0.99]",
-                    locked ? "border-slate-800 opacity-45" : "border-amber-300/24 hover:-translate-y-0.5",
+                    "vocabi-card-sheen flex w-full items-center gap-4 rounded-[1.25rem] border p-4 text-left shadow-[0_12px_30px_rgba(0,0,0,0.24)] transition duration-200 active:scale-[0.99]",
+                    locked ? "border-white/10 opacity-45" : "border-amber-300/24 hover:-translate-y-0.5 hover:border-amber-300/40",
                   )}
                 >
                   <div className={cn("grid h-12 w-12 shrink-0 place-items-center rounded-2xl", locked ? "bg-slate-900 text-slate-600" : "bg-amber-300 text-slate-950")}>
@@ -774,7 +774,7 @@ function LexiconView({ progress }: { progress: ReturnType<typeof useVocabiProgre
 
   return (
     <section className="space-y-4">
-      <section className="relative overflow-hidden rounded-[1.6rem] border border-emerald-300/20 bg-slate-950 p-4 shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
+      <section className="vocabi-panel vocabi-etched rounded-[1.6rem] border border-emerald-300/20 p-4">
         <Image src={vocabiStickerPackImage} alt="" width={1254} height={1254} className="absolute -right-24 -top-32 h-80 w-80 object-cover opacity-24" />
         <div className="relative space-y-4">
           <div className="flex items-start justify-between gap-4">
@@ -804,7 +804,7 @@ function LexiconView({ progress }: { progress: ReturnType<typeof useVocabiProgre
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Rechercher un mot, une réponse..."
-          className="h-14 w-full rounded-[1.25rem] border border-slate-800 bg-slate-950 pl-12 pr-4 text-sm font-bold text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-emerald-300 focus:ring-4 focus:ring-emerald-300/15"
+          className="h-14 w-full rounded-[1.25rem] border border-white/10 bg-slate-950 pl-12 pr-4 text-sm font-bold text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-emerald-300 focus:ring-4 focus:ring-emerald-300/15"
         />
       </div>
 
@@ -816,7 +816,7 @@ function LexiconView({ progress }: { progress: ReturnType<typeof useVocabiProgre
             onClick={() => setFilter(item.id)}
             className={cn(
               "h-10 shrink-0 rounded-full border px-4 text-xs font-black transition active:scale-95",
-              filter === item.id ? "border-emerald-300 bg-emerald-300 text-slate-950" : "border-slate-800 bg-slate-950 text-slate-400",
+              filter === item.id ? "border-emerald-300 bg-emerald-300 text-slate-950 shadow-[0_6px_16px_rgba(52,211,153,0.14)]" : "border-white/10 bg-slate-950 text-slate-400",
             )}
           >
             {item.label}
@@ -1318,7 +1318,7 @@ function ProfileMiniStat({ label, value }: { label: string; value: string }) {
 function PageTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <header className="pt-1">
-      <p className="text-sm font-black uppercase tracking-[0.16em] text-amber-300">{eyebrow}</p>
+      <p className="inline-flex rounded-full border border-amber-300/18 bg-amber-300/10 px-2.5 py-1 text-xs font-black uppercase tracking-[0.16em] text-amber-300">{eyebrow}</p>
       <h1 className="text-3xl font-black tracking-normal text-slate-100">{title}</h1>
     </header>
   );
@@ -1326,9 +1326,9 @@ function PageTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="p-4">
+    <Card className="vocabi-card-sheen p-4">
       <p className="text-2xl font-black">{value}</p>
-      <p className="text-sm font-bold text-slate-500">{label}</p>
+      <p className="text-sm font-bold text-slate-400">{label}</p>
     </Card>
   );
 }
@@ -1498,7 +1498,7 @@ function getExerciseTone(kind: Exercise["kind"]) {
 
   return {
     label: "Traduction",
-    className: "bg-violet-300 text-slate-950",
+    className: "bg-amber-300 text-slate-950",
     icon: <Sparkles className="h-3.5 w-3.5" />,
   };
 }
@@ -1539,10 +1539,10 @@ function ExerciseInput({
             onClick={() => onChange(option)}
             whileTap={disabled ? undefined : { scale: 0.985, y: 1 }}
             className={cn(
-              "min-h-14 rounded-2xl border px-4 text-left text-base font-extrabold shadow-sm transition",
+              "vocabi-card-sheen min-h-14 rounded-2xl border px-4 text-left text-base font-extrabold shadow-sm transition duration-200",
               answer === option
                 ? "border-amber-300 bg-amber-300 text-slate-950 shadow-[0_0_28px_rgba(246,199,86,0.16)]"
-                : "border-slate-800 bg-slate-950 text-slate-100",
+                : "border-white/10 text-slate-100 hover:border-amber-300/28",
             )}
           >
             {option}
@@ -1556,7 +1556,7 @@ function ExerciseInput({
     const selected = Array.isArray(answer) ? answer : [];
     return (
       <div className="space-y-4">
-        <div className="min-h-16 rounded-3xl border border-dashed border-amber-300/50 bg-slate-950 p-3">
+        <div className="vocabi-card-sheen min-h-16 rounded-3xl border border-dashed border-amber-300/45 p-3">
           <div className="flex flex-wrap gap-2">
             {selected.length === 0 ? <span className="text-sm font-bold text-slate-500">Tape les mots dans l&apos;ordre</span> : selected.map((token, tokenIndex) => (
               <motion.button key={`${token}-${tokenIndex}`} type="button" disabled={disabled} onClick={() => onChange(selected.filter((_, itemIndex) => itemIndex !== tokenIndex))} whileTap={disabled ? undefined : { scale: 0.94 }} className="rounded-xl bg-amber-300 px-3 py-2 text-sm font-extrabold text-slate-950 shadow-[0_0_18px_rgba(246,199,86,0.18)]">
@@ -1567,7 +1567,7 @@ function ExerciseInput({
         </div>
         <div className="flex flex-wrap gap-2">
           {exercise.tokens.map((token, tokenIndex) => (
-            <motion.button key={`${token}-${tokenIndex}`} type="button" disabled={disabled} onClick={() => onChange([...selected, token])} whileTap={disabled ? undefined : { scale: 0.95, y: 1 }} className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-extrabold text-slate-100 shadow-sm">
+            <motion.button key={`${token}-${tokenIndex}`} type="button" disabled={disabled} onClick={() => onChange([...selected, token])} whileTap={disabled ? undefined : { scale: 0.95, y: 1 }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm font-extrabold text-slate-100 shadow-sm transition hover:border-amber-300/28">
               {token}
             </motion.button>
           ))}
@@ -1591,8 +1591,8 @@ function ExerciseInput({
               onClick={() => onChange(active ? selected.filter((item) => item !== value) : [...selected, value])}
               whileTap={disabled ? undefined : { scale: 0.985, y: 1 }}
               className={cn(
-                "flex w-full items-center justify-between rounded-2xl border p-4 text-left font-extrabold shadow-sm transition",
-                active ? "border-amber-300 bg-amber-300 text-slate-950 shadow-[0_0_28px_rgba(246,199,86,0.16)]" : "border-slate-800 bg-slate-950 text-slate-100",
+                "vocabi-card-sheen flex w-full items-center justify-between rounded-2xl border p-4 text-left font-extrabold shadow-sm transition duration-200",
+                active ? "border-amber-300 bg-amber-300 text-slate-950 shadow-[0_0_28px_rgba(246,199,86,0.16)]" : "border-white/10 text-slate-100 hover:border-amber-300/28",
               )}
             >
               <span>{pair.left}</span>
@@ -1611,7 +1611,7 @@ function ExerciseInput({
       disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
       placeholder="Écris ta réponse..."
-      className="h-16 w-full rounded-3xl border border-slate-800 bg-slate-950 px-5 text-lg font-extrabold text-slate-100 shadow-sm outline-none transition placeholder:text-slate-500 focus:border-amber-300 focus:ring-4 focus:ring-amber-300/15"
+      className="h-16 w-full rounded-3xl border border-white/10 bg-slate-950 px-5 text-lg font-extrabold text-slate-100 shadow-sm outline-none transition placeholder:text-slate-500 focus:border-amber-300 focus:ring-4 focus:ring-amber-300/15"
     />
   );
 }
