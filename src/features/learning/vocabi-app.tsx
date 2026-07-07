@@ -29,7 +29,7 @@ import type { ChangeEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { badgeDefinitions } from "@/data/badges";
 import { allLessons, getExerciseById, getFirstLesson, units } from "@/data/lessons";
-import { errorShake, feedbackVariants, glintSweep, pageVariants, pressable, revealContainer, revealItem, successPulse } from "@/lib/animations/variants";
+import { errorShake, feedbackVariants, pageVariants, pressable, revealContainer, revealItem, successPulse } from "@/lib/animations/variants";
 import { Button } from "@/components/ui/button";
 import { BadgePill } from "@/components/ui/badge-pill";
 import { Card } from "@/components/ui/card";
@@ -338,13 +338,6 @@ function Dashboard({
         variants={prefersReducedMotion ? undefined : revealItem}
         className="vocabi-panel rounded-[2rem] border border-amber-300/18"
       >
-        {!prefersReducedMotion && (
-          <motion.div
-            aria-hidden="true"
-            animate={glintSweep}
-            className="pointer-events-none absolute inset-y-0 z-20 w-20 rotate-12 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-          />
-        )}
         <Image src={vocabiDashboardHeroImage} alt="" width={1122} height={1402} className="h-[22rem] w-full object-cover object-[50%_26%] opacity-90" preload />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_78%_44%_at_88%_6%,rgba(246,199,86,0.24),transparent_72%),linear-gradient(180deg,rgba(5,7,11,0.2)_0%,rgba(5,7,11,0.36)_42%,rgba(5,7,11,0.98)_100%)]" />
         <div className="absolute left-5 right-5 top-5 flex items-start justify-between gap-4">
@@ -465,7 +458,6 @@ function Dashboard({
 }
 
 function SmartSessionCard({ progress, onStartSmartSession }: { progress: ReturnType<typeof useVocabiProgress>; onStartSmartSession: () => void }) {
-  const prefersReducedMotion = useReducedMotion();
   const smartLesson = buildSmartSession({
     reviewQueue: progress.reviewQueue,
     exerciseHistory: progress.exerciseHistory,
@@ -477,13 +469,6 @@ function SmartSessionCard({ progress, onStartSmartSession }: { progress: ReturnT
   return (
     <section className="vocabi-panel rounded-[1.6rem] border border-sky-300/20 p-4">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_84%_58%_at_102%_-8%,rgba(125,211,252,0.2),transparent_72%),radial-gradient(ellipse_70%_48%_at_-12%_112%,rgba(246,199,86,0.11),transparent_72%)]" />
-      {!prefersReducedMotion && (
-        <motion.div
-          aria-hidden="true"
-          animate={glintSweep}
-          className="pointer-events-none absolute inset-y-0 z-10 w-16 rotate-12 bg-gradient-to-r from-transparent via-sky-100/10 to-transparent"
-        />
-      )}
       <div className="relative space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -617,13 +602,6 @@ function LessonResultCard({ result, onDismiss }: { result: LessonResult; onDismi
     >
       <Card className="vocabi-panel space-y-4 overflow-hidden border-amber-300/35 p-0 text-slate-100">
         <div className="relative min-h-44 p-5">
-          {!prefersReducedMotion && (
-            <motion.div
-              aria-hidden="true"
-              animate={glintSweep}
-              className="pointer-events-none absolute inset-y-0 z-20 w-20 rotate-12 bg-gradient-to-r from-transparent via-amber-100/18 to-transparent"
-            />
-          )}
           <Image src={vocabiLessonCompleteBadgeImage} alt="" fill sizes="384px" className="object-cover object-center opacity-85" />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.96)_0%,rgba(5,7,11,0.72)_46%,rgba(5,7,11,0.18)_100%)]" />
           <div className="relative max-w-[13rem]">
@@ -1411,13 +1389,6 @@ function LessonSession({
               className="space-y-4"
             >
               <Card className="relative space-y-4 overflow-hidden border-amber-300/18 bg-slate-950 p-0 text-slate-100 shadow-[0_24px_58px_rgba(0,0,0,0.35)]">
-                {!prefersReducedMotion && (
-                  <motion.div
-                    aria-hidden="true"
-                    animate={glintSweep}
-                    className="pointer-events-none absolute inset-y-0 z-20 w-20 rotate-12 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                  />
-                )}
                 <div className="relative h-28">
                   <Image src={vocabiBackgroundPackImage} alt="" fill sizes="384px" className="object-cover object-[50%_75%] opacity-50" />
                   <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.05)_0%,rgba(15,23,42,0.96)_100%)]" />

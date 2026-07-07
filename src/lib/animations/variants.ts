@@ -67,14 +67,3 @@ export const successPulse = {
 export const errorShake = {
   x: [0, -8, 8, -6, 6, 0],
 };
-
-export const slowHalo = {
-  opacity: [0.45, 0.85, 0.45],
-  scale: [1, 1.05, 1],
-  transition: { duration: 4.8, repeat: Infinity },
-};
-
-export const glintSweep = {
-  x: ["-120%", "120%"],
-  transition: { duration: 2.8, repeat: Infinity, repeatDelay: 3.5 },
-};
