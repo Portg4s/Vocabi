@@ -29,7 +29,7 @@ import type { ChangeEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { badgeDefinitions } from "@/data/badges";
 import { allLessons, getExerciseById, getFirstLesson, units } from "@/data/lessons";
-import { errorShake, feedbackVariants, glintSweep, pageVariants, pressable, revealContainer, revealItem, slowHalo, successPulse } from "@/lib/animations/variants";
+import { errorShake, feedbackVariants, glintSweep, pageVariants, pressable, revealContainer, revealItem, successPulse } from "@/lib/animations/variants";
 import { Button } from "@/components/ui/button";
 import { BadgePill } from "@/components/ui/badge-pill";
 import { Card } from "@/components/ui/card";
@@ -138,8 +138,7 @@ export function VocabiApp() {
   return (
     <main className="min-h-dvh text-slate-100" style={{ background: "#05070b" }}>
       <div
-        className="mx-auto min-h-dvh w-full max-w-md px-4 pb-[calc(env(safe-area-inset-bottom)+7.25rem)] pt-[calc(env(safe-area-inset-top)+1rem)]"
-        style={{ background: "radial-gradient(circle at 50% -10%, rgba(246,199,86,0.18), transparent 34%), linear-gradient(180deg, #080d14 0%, #05070b 45%, #070a10 100%)" }}
+        className="vocabi-app-shell mx-auto min-h-dvh w-full max-w-md px-4 pb-[calc(env(safe-area-inset-bottom)+7.25rem)] pt-[calc(env(safe-area-inset-top)+1rem)]"
       >
         <AnimatePresence mode="wait">
           {activeTab === "home" && (
@@ -337,24 +336,17 @@ function Dashboard({
 
       <motion.section
         variants={prefersReducedMotion ? undefined : revealItem}
-        className="relative overflow-hidden rounded-[2rem] border border-amber-300/20 bg-slate-950 shadow-[0_26px_70px_rgba(0,0,0,0.48)]"
+        className="vocabi-panel rounded-[2rem] border border-amber-300/18"
       >
         {!prefersReducedMotion && (
-          <>
-            <motion.div
-              aria-hidden="true"
-              animate={slowHalo}
-              className="pointer-events-none absolute -right-24 top-10 z-10 h-48 w-48 rounded-full bg-amber-300/18 blur-3xl"
-            />
-            <motion.div
-              aria-hidden="true"
-              animate={glintSweep}
-              className="pointer-events-none absolute inset-y-0 z-20 w-24 rotate-12 bg-gradient-to-r from-transparent via-white/12 to-transparent"
-            />
-          </>
+          <motion.div
+            aria-hidden="true"
+            animate={glintSweep}
+            className="pointer-events-none absolute inset-y-0 z-20 w-20 rotate-12 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+          />
         )}
         <Image src={vocabiDashboardHeroImage} alt="" width={1122} height={1402} className="h-[22rem] w-full object-cover object-[50%_26%] opacity-90" preload />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.22)_0%,rgba(5,7,11,0.36)_42%,rgba(5,7,11,0.98)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_78%_44%_at_88%_6%,rgba(246,199,86,0.24),transparent_72%),linear-gradient(180deg,rgba(5,7,11,0.2)_0%,rgba(5,7,11,0.36)_42%,rgba(5,7,11,0.98)_100%)]" />
         <div className="absolute left-5 right-5 top-5 flex items-start justify-between gap-4">
           <div>
             <p className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/35 bg-black/40 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-amber-200 backdrop-blur">
@@ -381,7 +373,7 @@ function Dashboard({
             <Metric icon={<Trophy className="h-5 w-5" />} label="Leçons" value={progress.completedLessons.toString()} tone="sky" />
           </motion.div>
 
-          <div className="space-y-3 rounded-[1.4rem] border border-slate-800 bg-slate-900/80 p-3 backdrop-blur">
+          <div className="vocabi-card-sheen space-y-3 rounded-[1.4rem] border border-white/10 p-3 backdrop-blur">
             <div className="flex items-center justify-between text-xs font-black uppercase tracking-[0.12em] text-slate-400">
               <span>{progress.todayXp}/{progress.profile?.dailyGoalXp ?? 30} XP</span>
               <span>{nextLesson.estimatedMinutes} min · {nextLesson.difficulty}</span>
@@ -402,7 +394,7 @@ function Dashboard({
         <ReviewMissionCard progress={progress} onStartReview={onStartReview} />
       </motion.div>
 
-      <motion.section variants={prefersReducedMotion ? undefined : revealItem} className="space-y-4 rounded-[1.6rem] border border-slate-800 bg-slate-950/80 p-4 shadow-[0_18px_46px_rgba(0,0,0,0.28)] backdrop-blur">
+      <motion.section variants={prefersReducedMotion ? undefined : revealItem} className="vocabi-panel space-y-4 rounded-[1.6rem] border border-white/10 p-4 backdrop-blur">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.14em] text-amber-300">
@@ -416,7 +408,7 @@ function Dashboard({
         </div>
         <ProgressBar value={unitPercent} className="bg-slate-900" />
         <div className="relative space-y-3 pt-1">
-          <span className="absolute bottom-8 left-[1.15rem] top-8 w-1 rounded-full bg-slate-900" />
+          <span className="absolute bottom-8 left-[1.15rem] top-8 w-1 rounded-full bg-white/10" />
           {currentUnit.lessons.map((lesson, lessonIndex) => {
             const status = progress.getLessonStatus(lesson.id);
             const active = lesson.id === nextLesson.id;
@@ -432,7 +424,7 @@ function Dashboard({
                 whileTap={status === "locked" || prefersReducedMotion ? undefined : "tap"}
                 className={cn(
                   "relative z-10 flex min-h-16 w-full items-center gap-3 rounded-[1.4rem] px-2 py-2 text-left transition",
-                  active ? "bg-amber-300/10 shadow-[inset_0_0_0_1px_rgba(246,199,86,0.18),0_0_24px_rgba(246,199,86,0.08)]" : "bg-transparent",
+                  active ? "bg-amber-300/10 shadow-[inset_0_0_0_1px_rgba(246,199,86,0.2),0_10px_24px_rgba(0,0,0,0.18)]" : "bg-transparent",
                   status === "locked" && "opacity-55",
                 )}
               >
@@ -483,13 +475,13 @@ function SmartSessionCard({ progress, onStartSmartSession }: { progress: ReturnT
   const mistakeCount = progress.exerciseHistory.filter((item) => !item.correct).length;
 
   return (
-    <section className="relative overflow-hidden rounded-[1.6rem] border border-sky-300/24 bg-slate-950 p-4 shadow-[0_18px_46px_rgba(0,0,0,0.32)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_20%,rgba(125,211,252,0.22),transparent_34%),radial-gradient(circle_at_10%_90%,rgba(246,199,86,0.14),transparent_32%)]" />
+    <section className="vocabi-panel rounded-[1.6rem] border border-sky-300/20 p-4">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_84%_58%_at_102%_-8%,rgba(125,211,252,0.2),transparent_72%),radial-gradient(ellipse_70%_48%_at_-12%_112%,rgba(246,199,86,0.11),transparent_72%)]" />
       {!prefersReducedMotion && (
         <motion.div
           aria-hidden="true"
           animate={glintSweep}
-          className="pointer-events-none absolute inset-y-0 w-20 rotate-12 bg-gradient-to-r from-transparent via-sky-100/12 to-transparent"
+          className="pointer-events-none absolute inset-y-0 z-10 w-16 rotate-12 bg-gradient-to-r from-transparent via-sky-100/10 to-transparent"
         />
       )}
       <div className="relative space-y-4">
@@ -523,21 +515,13 @@ function SmartSessionCard({ progress, onStartSmartSession }: { progress: ReturnT
 }
 
 function ReviewMissionCard({ progress, onStartReview }: { progress: ReturnType<typeof useVocabiProgress>; onStartReview: () => void }) {
-  const prefersReducedMotion = useReducedMotion();
   const dueCount = progress.reviewSummary.dueCount;
   const hasDueCards = dueCount > 0 && progress.reviewQueue.length > 0;
   const nextDue = progress.reviewSummary.nextDueAt ? formatShortDate(progress.reviewSummary.nextDueAt) : "Après ta prochaine leçon";
 
   return (
-    <section className="relative overflow-hidden rounded-[1.6rem] border border-emerald-300/24 bg-slate-950 p-4 shadow-[0_18px_46px_rgba(0,0,0,0.32)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(52,211,153,0.22),transparent_34%),radial-gradient(circle_at_10%_90%,rgba(246,199,86,0.12),transparent_32%)]" />
-      {!prefersReducedMotion && (
-        <motion.div
-          aria-hidden="true"
-          animate={slowHalo}
-          className="pointer-events-none absolute -right-16 -top-10 h-36 w-36 rounded-full bg-emerald-300/16 blur-3xl"
-        />
-      )}
+    <section className="vocabi-panel rounded-[1.6rem] border border-emerald-300/20 p-4">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_84%_58%_at_100%_-10%,rgba(52,211,153,0.2),transparent_72%),radial-gradient(ellipse_72%_48%_at_-12%_110%,rgba(246,199,86,0.1),transparent_72%)]" />
       <div className="relative space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -583,7 +567,7 @@ function MiniReviewStat({ label, value, tone }: { label: string; value: string; 
   }[tone];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-3">
+    <div className="vocabi-card-sheen rounded-2xl border border-white/10 p-3">
       <p className={cn("text-xl font-black leading-none", toneClass)}>{value}</p>
       <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-slate-500">{label}</p>
     </div>
@@ -1015,9 +999,9 @@ function StatsView({ progress, onStartMistakes }: { progress: ReturnType<typeof 
           <p className="text-sm leading-6 text-slate-400">Aucune activité pour l&apos;instant. Une leçon et cette zone prendra vie.</p>
         ) : (
           progress.dailyStats.slice(-5).reverse().map((day) => (
-            <div key={day.date} className="flex items-center justify-between rounded-2xl bg-slate-900 p-3">
+            <div key={day.date} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/80 p-3">
               <span className="text-sm font-bold text-slate-300">{day.date}</span>
-              <span className="text-sm font-black text-emerald-700">+{day.xp} XP</span>
+              <span className="text-sm font-black text-emerald-300">+{day.xp} XP</span>
             </div>
           ))
         )}
@@ -1058,8 +1042,8 @@ function StatsView({ progress, onStartMistakes }: { progress: ReturnType<typeof 
           <p className="text-sm leading-6 text-slate-400">Aucune erreur enregistrée pour l&apos;instant. C&apos;est bon signe.</p>
         ) : (
           recentMistakes.map((item) => (
-            <div key={item.id} className="rounded-2xl bg-rose-50 p-3">
-              <p className="text-sm font-black text-rose-900">{getExerciseById(item.exerciseId)?.prompt ?? item.exerciseId}</p>
+            <div key={item.id} className="rounded-2xl border border-rose-300/18 bg-rose-400/10 p-3">
+              <p className="text-sm font-black text-rose-100">{getExerciseById(item.exerciseId)?.prompt ?? item.exerciseId}</p>
               <p className="text-xs font-bold leading-5 text-slate-400">Réponse attendue : {formatExpected(item.expected)}</p>
             </div>
           ))
@@ -1147,7 +1131,7 @@ function ProfileView({ progress }: { progress: ReturnType<typeof useVocabiProgre
             </button>
           ))}
         </div>
-        {goalMessage && <p className="rounded-2xl bg-emerald-50 p-3 text-sm font-bold leading-6 text-emerald-800">{goalMessage}</p>}
+        {goalMessage && <p className="rounded-2xl border border-emerald-300/18 bg-emerald-300/10 p-3 text-sm font-bold leading-6 text-emerald-100">{goalMessage}</p>}
       </Card>
       <Card className="space-y-4">
         <div className="flex items-center gap-3">
